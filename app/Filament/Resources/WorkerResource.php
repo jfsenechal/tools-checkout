@@ -4,6 +4,7 @@ namespace App\Filament\Resources;
 
 use App\Filament\Resources\WorkerResource\Pages;
 use App\Models\Worker;
+use BackedEnum;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
@@ -14,14 +15,15 @@ use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
 use Filament\Tables;
 use Filament\Tables\Table;
+use UnitEnum;
 
-class WorkerResource extends Resource
+final class WorkerResource extends Resource
 {
     protected static ?string $model = Worker::class;
 
-    protected static string|null|\BackedEnum $navigationIcon = 'heroicon-o-user-group';
+    protected static string|null|BackedEnum $navigationIcon = 'heroicon-o-user-group';
 
-    protected static string|null|\UnitEnum $navigationGroup = 'People';
+    protected static string|null|UnitEnum $navigationGroup = 'People';
 
     protected static ?int $navigationSort = 1;
 
@@ -103,7 +105,7 @@ class WorkerResource extends Resource
 
                 Tables\Columns\TextColumn::make('status')
                     ->badge()
-                    ->color(fn(string $state): string => match ($state) {
+                    ->color(fn (string $state): string => match ($state) {
                         'active' => 'success',
                         'inactive' => 'gray',
                         'suspended' => 'danger',
@@ -139,7 +141,12 @@ class WorkerResource extends Resource
                     ->multiple(),
 
                 Tables\Filters\SelectFilter::make('department')
-                    ->relationship('checkouts', 'department')
+                    ->options(fn (): array => Worker::query()
+                        ->whereNotNull('department')
+                        ->distinct()
+                        ->pluck('department', 'department')
+                        ->toArray()
+                    )
                     ->multiple(),
             ])
             ->actions([
