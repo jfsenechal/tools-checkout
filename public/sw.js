@@ -13,11 +13,10 @@
  *  You can verify it's working in browser DevTools → Application → Service Workers.
  * @type {string}
  */
-const CACHE_NAME = 'tool-scanner-v1';
+const CACHE_NAME = 'tool-scanner-v2';
 const urlsToCache = [
     '/scanner',
     '/scanner-manifest.json',
-    'https://cdn.tailwindcss.com',
     'https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js',
     'https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js'
 ];
