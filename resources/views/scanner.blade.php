@@ -5,27 +5,27 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="theme-color" content="#3B82F6">
     <title>Tool Checkout Scanner</title>
-    
+
     <!-- PWA Manifest -->
-    <link rel="manifest" href="/scanner/manifest.json">
-    <link rel="apple-touch-icon" href="/scanner/icon-192.png">
-    
+    <link rel="manifest" href="/scanner-manifest.json">
+    <link rel="apple-touch-icon" href="/scanner-icon.png">
+
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    
+
     <!-- Alpine.js -->
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
-    
+
     <!-- jsQR Library for QR scanning -->
     <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
-    
+
     <style>
         [x-cloak] { display: none !important; }
         #video { transform: scaleX(-1); }
     </style>
 </head>
 <body class="bg-gray-50 min-h-screen" x-data="scannerApp()" x-init="init()">
-    
+
     <!-- Header -->
     <header class="bg-blue-600 text-white shadow-lg">
         <div class="container mx-auto px-4 py-4">
@@ -49,22 +49,22 @@
     </header>
 
     <main class="container mx-auto px-4 py-6 max-w-2xl">
-        
+
         <!-- Scanner Section -->
         <div x-show="!scannedTool" class="bg-white rounded-lg shadow-lg p-6 mb-6">
             <h2 class="text-xl font-semibold mb-4 text-gray-800">Scan Tool QR Code</h2>
-            
+
             <!-- Camera View -->
             <div x-show="cameraActive" class="relative mb-4">
                 <video id="video" class="w-full rounded-lg bg-black" playsinline></video>
                 <canvas id="canvas" class="hidden"></canvas>
                 <div class="absolute inset-0 border-4 border-blue-500 border-dashed rounded-lg pointer-events-none"></div>
             </div>
-            
+
             <!-- Camera Controls -->
             <div class="flex gap-2">
-                <button 
-                    @click="startCamera()" 
+                <button
+                    @click="startCamera()"
                     x-show="!cameraActive"
                     class="flex-1 bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-700 transition flex items-center justify-center gap-2">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -73,15 +73,15 @@
                     </svg>
                     Start Camera
                 </button>
-                
-                <button 
-                    @click="stopCamera()" 
+
+                <button
+                    @click="stopCamera()"
                     x-show="cameraActive"
                     class="flex-1 bg-red-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-red-700 transition">
                     Stop Camera
                 </button>
             </div>
-            
+
             <!-- Status Messages -->
             <div x-show="scanning && cameraActive" class="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
                 <p class="text-blue-800 text-center">🔍 Scanning for QR code...</p>
@@ -98,7 +98,7 @@
                     </svg>
                 </button>
             </div>
-            
+
             <div class="space-y-3">
                 <div>
                     <span class="text-sm text-gray-500">Tool Name</span>
@@ -114,7 +114,7 @@
                 </div>
                 <div>
                     <span class="text-sm text-gray-500">Status</span>
-                    <span 
+                    <span
                         class="inline-block px-3 py-1 rounded-full text-sm font-semibold"
                         :class="{
                             'bg-green-100 text-green-800': scannedTool?.status === 'available',
@@ -133,8 +133,8 @@
                         <p class="text-yellow-800" x-text="currentCheckout.worker.name"></p>
                         <p class="text-sm text-yellow-600">Badge: <span x-text="currentCheckout.worker.badge_number"></span></p>
                         <p class="text-sm text-yellow-600">Since: <span x-text="formatDate(currentCheckout.checked_out_at)"></span></p>
-                        <span 
-                            x-show="currentCheckout.is_overdue" 
+                        <span
+                            x-show="currentCheckout.is_overdue"
                             class="inline-block mt-2 px-2 py-1 bg-red-100 text-red-800 text-xs font-bold rounded">
                             OVERDUE
                         </span>
@@ -144,19 +144,19 @@
 
             <!-- Action Buttons -->
             <div class="mt-6 space-y-3">
-                <button 
+                <button
                     x-show="scannedTool?.is_available"
-                    @click="showWorkerSelection = true" 
+                    @click="showWorkerSelection = true"
                     class="w-full bg-green-600 text-white px-6 py-4 rounded-lg font-semibold hover:bg-green-700 transition flex items-center justify-center gap-2">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path>
                     </svg>
                     Checkout Tool
                 </button>
-                
-                <button 
+
+                <button
                     x-show="scannedTool?.is_checked_out"
-                    @click="returnTool()" 
+                    @click="returnTool()"
                     class="w-full bg-blue-600 text-white px-6 py-4 rounded-lg font-semibold hover:bg-blue-700 transition flex items-center justify-center gap-2">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"></path>
@@ -167,8 +167,8 @@
         </div>
 
         <!-- Worker Selection Modal -->
-        <div 
-            x-show="showWorkerSelection" 
+        <div
+            x-show="showWorkerSelection"
             x-cloak
             class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50"
             @click.self="showWorkerSelection = false">
@@ -182,29 +182,29 @@
                             </svg>
                         </button>
                     </div>
-                    
-                    <input 
-                        type="text" 
+
+                    <input
+                        type="text"
                         x-model="workerSearch"
                         @input="searchWorkers()"
                         placeholder="Search by name or badge number..."
                         class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
                 </div>
-                
+
                 <div class="overflow-y-auto max-h-96 p-4">
                     <template x-if="loadingWorkers">
                         <div class="text-center py-8">
                             <div class="inline-block animate-spin rounded-full h-8 w-8 border-4 border-blue-500 border-t-transparent"></div>
                         </div>
                     </template>
-                    
+
                     <template x-if="!loadingWorkers && workers.length === 0">
                         <p class="text-center text-gray-500 py-8">No workers found</p>
                     </template>
-                    
+
                     <div class="space-y-2">
                         <template x-for="worker in workers" :key="worker.id">
-                            <button 
+                            <button
                                 @click="selectWorker(worker)"
                                 class="w-full text-left p-4 border border-gray-200 rounded-lg hover:bg-blue-50 hover:border-blue-300 transition">
                                 <p class="font-semibold" x-text="worker.name"></p>
@@ -218,8 +218,8 @@
         </div>
 
         <!-- Success/Error Messages -->
-        <div 
-            x-show="message.text" 
+        <div
+            x-show="message.text"
             x-cloak
             class="fixed bottom-4 right-4 max-w-sm p-4 rounded-lg shadow-lg z-50 animate-slide-up"
             :class="{
@@ -248,7 +248,7 @@
                 canvas: null,
                 canvasContext: null,
                 scanInterval: null,
-                
+
                 init() {
                     this.video = document.getElementById('video');
                     this.canvas = document.getElementById('canvas');
@@ -264,11 +264,11 @@
                     // Load workers on init
                     this.loadWorkers();
                 },
-                
+
                 async startCamera() {
                     try {
-                        const stream = await navigator.mediaDevices.getUserMedia({ 
-                            video: { facingMode: 'environment' } 
+                        const stream = await navigator.mediaDevices.getUserMedia({
+                            video: { facingMode: 'environment' }
                         });
                         this.video.srcObject = stream;
                         await this.video.play();
@@ -279,7 +279,7 @@
                         this.showMessage('Camera access denied or not available', 'error');
                     }
                 },
-                
+
                 stopCamera() {
                     if (this.video.srcObject) {
                         this.video.srcObject.getTracks().forEach(track => track.stop());
@@ -290,7 +290,7 @@
                         clearInterval(this.scanInterval);
                     }
                 },
-                
+
                 toggleCamera() {
                     if (this.cameraActive) {
                         this.stopCamera();
@@ -298,35 +298,35 @@
                         this.startCamera();
                     }
                 },
-                
+
                 startScanning() {
                     this.scanInterval = setInterval(() => {
                         this.scan();
                     }, 500);
                 },
-                
+
                 scan() {
                     if (!this.video.videoWidth || !this.video.videoHeight) return;
-                    
+
                     this.canvas.width = this.video.videoWidth;
                     this.canvas.height = this.video.videoHeight;
                     this.canvasContext.drawImage(this.video, 0, 0);
-                    
+
                     const imageData = this.canvasContext.getImageData(
                         0, 0, this.canvas.width, this.canvas.height
                     );
-                    
+
                     const code = jsQR(imageData.data, imageData.width, imageData.height);
-                    
+
                     if (code) {
                         this.handleQRCode(code.data);
                     }
                 },
-                
+
                 async handleQRCode(qrData) {
                     this.stopCamera();
                     this.scanning = false;
-                    
+
                     try {
                         const response = await fetch('/api/scanner/scan', {
                             method: 'POST',
@@ -336,9 +336,9 @@
                             },
                             body: JSON.stringify({ qr_data: qrData })
                         });
-                        
+
                         const result = await response.json();
-                        
+
                         if (result.success) {
                             this.scannedTool = result.data.tool;
                             this.currentCheckout = result.data.current_checkout;
@@ -351,7 +351,7 @@
                         setTimeout(() => this.startCamera(), 2000);
                     }
                 },
-                
+
                 async loadWorkers() {
                     this.loadingWorkers = true;
                     try {
@@ -366,7 +366,7 @@
                         this.loadingWorkers = false;
                     }
                 },
-                
+
                 async searchWorkers() {
                     this.loadingWorkers = true;
                     try {
@@ -381,7 +381,7 @@
                         this.loadingWorkers = false;
                     }
                 },
-                
+
                 async selectWorker(worker) {
                     try {
                         const response = await fetch('/api/scanner/checkout', {
@@ -395,9 +395,9 @@
                                 worker_id: worker.id
                             })
                         });
-                        
+
                         const result = await response.json();
-                        
+
                         if (result.success) {
                             this.showMessage('Tool checked out successfully!', 'success');
                             this.showWorkerSelection = false;
@@ -409,10 +409,10 @@
                         this.showMessage('Error checking out tool', 'error');
                     }
                 },
-                
+
                 async returnTool() {
                     if (!confirm('Return this tool?')) return;
-                    
+
                     try {
                         const response = await fetch('/api/scanner/return', {
                             method: 'POST',
@@ -424,9 +424,9 @@
                                 checkout_id: this.currentCheckout.id
                             })
                         });
-                        
+
                         const result = await response.json();
-                        
+
                         if (result.success) {
                             this.showMessage('Tool returned successfully!', 'success');
                             setTimeout(() => this.reset(), 2000);
@@ -437,7 +437,7 @@
                         this.showMessage('Error returning tool', 'error');
                     }
                 },
-                
+
                 reset() {
                     this.scannedTool = null;
                     this.currentCheckout = null;
@@ -445,14 +445,14 @@
                     this.workerSearch = '';
                     this.startCamera();
                 },
-                
+
                 showMessage(text, type = 'info') {
                     this.message = { text, type };
                     setTimeout(() => {
                         this.message = { text: '', type: '' };
                     }, 5000);
                 },
-                
+
                 formatDate(dateString) {
                     if (!dateString) return 'N/A';
                     return new Date(dateString).toLocaleString();
