@@ -253,7 +253,14 @@
                     this.video = document.getElementById('video');
                     this.canvas = document.getElementById('canvas');
                     this.canvasContext = this.canvas.getContext('2d');
-                    
+
+                    // Register service worker for offline support
+                    if ('serviceWorker' in navigator) {
+                        navigator.serviceWorker.register('/sw.js')
+                            .then(() => console.log('Service worker registered'))
+                            .catch(err => console.log('Service worker registration failed:', err));
+                    }
+
                     // Load workers on init
                     this.loadWorkers();
                 },
