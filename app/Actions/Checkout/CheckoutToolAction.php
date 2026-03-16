@@ -1,14 +1,17 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Actions\Checkout;
 
 use App\DataTransferObjects\CheckoutData;
 use App\Models\Checkout;
 use App\Models\Tool;
 use App\Models\Worker;
+use Exception;
 use Illuminate\Support\Facades\DB;
 
-class CheckoutToolAction
+final class CheckoutToolAction
 {
     /**
      * Execute the checkout action
@@ -19,15 +22,15 @@ class CheckoutToolAction
             // Verify tool is available
             $tool = Tool::findOrFail($data->toolId);
 
-            if (!$tool->is_available) {
-                throw new \Exception("Tool '{$tool->name}' is not available for checkout.");
+            if (! $tool->is_available) {
+                throw new Exception("Tool '{$tool->name}' is not available for checkout.");
             }
 
             // Verify worker is active
             $worker = Worker::findOrFail($data->workerId);
 
-            if (!$worker->is_active) {
-                throw new \Exception("Worker '{$worker->name}' is not active.");
+            if (! $worker->is_active) {
+                throw new Exception("Worker '{$worker->first_name} {$worker->last_name}' is not active.");
             }
 
             // Create checkout record

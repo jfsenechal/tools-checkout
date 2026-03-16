@@ -10,12 +10,10 @@ return new class extends Migration
     {
         Schema::create('workers', function (Blueprint $table) {
             $table->id();
-            $table->string('name');
-            $table->string('badge_number')->unique();
+            $table->string('first_name');
+            $table->string('last_name');
             $table->string('email')->unique()->nullable();
             $table->string('phone')->nullable();
-            $table->string('department')->nullable();
-            $table->string('position')->nullable();
             $table->enum('status', ['active', 'inactive', 'suspended'])
                 ->default('active');
             $table->text('notes')->nullable();
@@ -23,7 +21,6 @@ return new class extends Migration
             $table->softDeletes();
 
             $table->index('status');
-            $table->index('department');
         });
     }
 

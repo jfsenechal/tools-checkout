@@ -1,29 +1,32 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\CheckoutResource\Pages;
 use App\Models\Checkout;
+use BackedEnum;
 use Filament\Actions\Action;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Forms;
-use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
+use UnitEnum;
 
-class CheckoutResource extends Resource
+final class CheckoutResource extends Resource
 {
     protected static ?string $model = Checkout::class;
 
-    protected static string|null|\BackedEnum $navigationIcon = 'heroicon-o-arrow-path-rounded-square';
+    protected static string|null|BackedEnum $navigationIcon = 'heroicon-o-arrow-path-rounded-square';
 
-    protected static string|null|\UnitEnum $navigationGroup = 'Transactions';
+    protected static string|null|UnitEnum $navigationGroup = 'Transactions';
 
     protected static ?int $navigationSort = 1;
 
@@ -35,7 +38,7 @@ class CheckoutResource extends Resource
                     ->schema([
                         Forms\Components\Select::make('tool_id')
                             ->label('Tool')
-                            ->relationship('tool', 'name', fn(Builder $query) => $query->where('status', 'available')
+                            ->relationship('tool', 'name', fn (Builder $query) => $query->where('status', 'available')
                             )
                             ->searchable()
                             ->preload()
@@ -45,7 +48,7 @@ class CheckoutResource extends Resource
 
                         Forms\Components\Select::make('worker_id')
                             ->label('Worker')
-                            ->relationship('worker', 'name', fn(Builder $query) => $query->where('status', 'active')
+                            ->relationship('worker', 'last_name', fn (Builder $query) => $query->where('status', 'active')
                             )
                             ->searchable()
                             ->preload()
@@ -104,7 +107,7 @@ class CheckoutResource extends Resource
                             ->rows(3)
                             ->columnSpanFull(),
                     ])->columns(2)
-                    ->visible(fn($record) => $record !== null),
+                    ->visible(fn ($record) => $record !== null),
             ]);
     }
 
@@ -122,14 +125,14 @@ class CheckoutResource extends Resource
                     ->label('Tool Name')
                     ->searchable()
                     ->sortable()
-                    ->description(fn(Checkout $record): string => $record->tool->category ?? ''
+                    ->description(fn (Checkout $record): string => $record->tool->category ?? ''
                     ),
 
-                Tables\Columns\TextColumn::make('worker.name')
+                Tables\Columns\TextColumn::make('worker.last_name')
                     ->label('Worker')
                     ->searchable()
                     ->sortable()
-                    ->description(fn(Checkout $record): string => $record->worker->badge_number
+                    ->description(fn (Checkout $record): string => $record->worker->first_name
                     ),
 
                 Tables\Columns\TextColumn::make('checked_out_at')
@@ -149,7 +152,7 @@ class CheckoutResource extends Resource
                     ->sortable()
                     ->placeholder('Not returned')
                     ->badge()
-                    ->color(fn($state): string => $state ? 'success' : 'warning'),
+                    ->color(fn ($state): string => $state ? 'success' : 'warning'),
 
                 Tables\Columns\IconColumn::make('is_overdue')
                     ->label('Overdue')
@@ -172,12 +175,12 @@ class CheckoutResource extends Resource
             ->filters([
                 Tables\Filters\Filter::make('active')
                     ->label('Active Checkouts')
-                    ->query(fn(Builder $query): Builder => $query->whereNull('returned_at'))
+                    ->query(fn (Builder $query): Builder => $query->whereNull('returned_at'))
                     ->default(),
 
                 Tables\Filters\Filter::make('overdue')
                     ->label('Overdue')
-                    ->query(fn(Builder $query): Builder => $query->whereNull('returned_at')
+                    ->query(fn (Builder $query): Builder => $query->whereNull('returned_at')
                         ->where('expected_return_at', '<', now())
                     ),
 
@@ -237,7 +240,7 @@ class CheckoutResource extends Resource
                             $tool->markAsAvailable();
                         }
                     })
-                    ->visible(fn(Checkout $record): bool => !$record->is_returned)
+                    ->visible(fn (Checkout $record): bool => ! $record->is_returned)
                     ->requiresConfirmation(),
             ])
             ->bulkActions([

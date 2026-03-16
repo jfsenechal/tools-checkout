@@ -130,8 +130,7 @@
                 <template x-if="currentCheckout">
                     <div class="mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
                         <p class="font-semibold text-yellow-900 mb-2">Currently Checked Out To:</p>
-                        <p class="text-yellow-800" x-text="currentCheckout.worker.name"></p>
-                        <p class="text-sm text-yellow-600">Badge: <span x-text="currentCheckout.worker.badge_number"></span></p>
+                        <p class="text-yellow-800" x-text="currentCheckout.worker.first_name + ' ' + currentCheckout.worker.last_name"></p>
                         <p class="text-sm text-yellow-600">Since: <span x-text="formatDate(currentCheckout.checked_out_at)"></span></p>
                         <span
                             x-show="currentCheckout.is_overdue"
@@ -207,9 +206,8 @@
                             <button
                                 @click="selectWorker(worker)"
                                 class="w-full text-left p-4 border border-gray-200 rounded-lg hover:bg-blue-50 hover:border-blue-300 transition">
-                                <p class="font-semibold" x-text="worker.name"></p>
-                                <p class="text-sm text-gray-600">Badge: <span x-text="worker.badge_number"></span></p>
-                                <p class="text-sm text-gray-500" x-text="worker.department"></p>
+                                <p class="font-semibold" x-text="worker.first_name + ' ' + worker.last_name"></p>
+                                <p class="text-sm text-gray-500" x-text="worker.email"></p>
                             </button>
                         </template>
                     </div>

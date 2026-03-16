@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -9,17 +11,15 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Traits\LogsActivity;
 
-class Worker extends Model
+final class Worker extends Model
 {
-    use HasFactory, SoftDeletes, LogsActivity;
+    use HasFactory, LogsActivity, SoftDeletes;
 
     protected $fillable = [
-        'name',
-        'badge_number',
+        'first_name',
+        'last_name',
         'email',
         'phone',
-        'department',
-        'position',
         'status',
         'notes',
     ];
@@ -27,7 +27,7 @@ class Worker extends Model
     public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()
-            ->logOnly(['name', 'badge_number', 'status', 'department'])
+            ->logOnly(['first_name', 'last_name', 'status'])
             ->logOnlyDirty()
             ->dontSubmitEmptyLogs();
     }
@@ -48,11 +48,6 @@ class Worker extends Model
     public function scopeActive($query)
     {
         return $query->where('status', 'active');
-    }
-
-    public function scopeByDepartment($query, string $department)
-    {
-        return $query->where('department', $department);
     }
 
     // Accessors

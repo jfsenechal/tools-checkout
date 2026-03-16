@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\WorkerResource\Pages;
@@ -33,15 +35,13 @@ final class WorkerResource extends Resource
             ->schema([
                 Section::make('Worker Information')
                     ->schema([
-                        Forms\Components\TextInput::make('name')
+                        Forms\Components\TextInput::make('first_name')
                             ->required()
                             ->maxLength(255),
 
-                        Forms\Components\TextInput::make('badge_number')
+                        Forms\Components\TextInput::make('last_name')
                             ->required()
-                            ->unique(ignoreRecord: true)
-                            ->maxLength(255)
-                            ->helperText('Unique badge or employee number'),
+                            ->maxLength(255),
 
                         Forms\Components\TextInput::make('email')
                             ->email()
@@ -52,12 +52,13 @@ final class WorkerResource extends Resource
                             ->tel()
                             ->maxLength(255),
 
-                        Forms\Components\TextInput::make('department')
-                            ->maxLength(255),
+                    ])->columns(2),
 
-                        Forms\Components\TextInput::make('position')
-                            ->maxLength(255),
-
+                Section::make('Additional Notes')
+                    ->schema([
+                        Forms\Components\Textarea::make('notes')
+                            ->rows(3)
+                            ->columnSpanFull(),
                         Forms\Components\Select::make('status')
                             ->options([
                                 'active' => 'Active',
@@ -67,16 +68,9 @@ final class WorkerResource extends Resource
                             ->default('active')
                             ->required()
                             ->native(false),
-                    ])->columns(2),
-
-                Section::make('Additional Notes')
-                    ->schema([
-                        Forms\Components\Textarea::make('notes')
-                            ->rows(3)
-                            ->columnSpanFull(),
                     ])
                     ->collapsible()
-                    ->collapsed(),
+                    ->collapsed(false),
             ]);
     }
 
@@ -84,24 +78,14 @@ final class WorkerResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('badge_number')
-                    ->label('Badge #')
+                Tables\Columns\TextColumn::make('first_name')
+                    ->searchable()
+                    ->sortable(),
+
+                Tables\Columns\TextColumn::make('last_name')
                     ->searchable()
                     ->sortable()
                     ->weight('bold'),
-
-                Tables\Columns\TextColumn::make('name')
-                    ->searchable()
-                    ->sortable(),
-
-                Tables\Columns\TextColumn::make('department')
-                    ->badge()
-                    ->searchable()
-                    ->sortable(),
-
-                Tables\Columns\TextColumn::make('position')
-                    ->searchable()
-                    ->toggleable(),
 
                 Tables\Columns\TextColumn::make('status')
                     ->badge()
@@ -140,14 +124,6 @@ final class WorkerResource extends Resource
                     ])
                     ->multiple(),
 
-                Tables\Filters\SelectFilter::make('department')
-                    ->options(fn (): array => Worker::query()
-                        ->whereNotNull('department')
-                        ->distinct()
-                        ->pluck('department', 'department')
-                        ->toArray()
-                    )
-                    ->multiple(),
             ])
             ->actions([
                 EditAction::make(),
@@ -158,7 +134,7 @@ final class WorkerResource extends Resource
                     DeleteBulkAction::make(),
                 ]),
             ])
-            ->defaultSort('name', 'asc');
+            ->defaultSort('last_name', 'asc');
     }
 
     public static function getPages(): array

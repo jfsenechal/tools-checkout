@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Controllers\Api;
 
 use App\Actions\Checkout\CheckoutToolAction;
@@ -9,11 +11,12 @@ use App\DataTransferObjects\ReturnData;
 use App\Http\Controllers\Controller;
 use App\Models\Tool;
 use App\Models\Worker;
+use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 
-class ScannerController extends Controller
+final class ScannerController extends Controller
 {
     /**
      * Scan a QR code and get tool information
@@ -35,7 +38,7 @@ class ScannerController extends Controller
         try {
             $qrData = json_decode($request->qr_data, true);
 
-            if (!isset($qrData['type']) || $qrData['type'] !== 'tool') {
+            if (! isset($qrData['type']) || $qrData['type'] !== 'tool') {
                 return response()->json([
                     'success' => false,
                     'message' => 'Invalid QR code type',
@@ -46,7 +49,7 @@ class ScannerController extends Controller
                 ->where('code', $qrData['code'])
                 ->first();
 
-            if (!$tool) {
+            if (! $tool) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Tool not found',
@@ -69,8 +72,8 @@ class ScannerController extends Controller
                         'id' => $tool->currentCheckout->id,
                         'worker' => [
                             'id' => $tool->currentCheckout->worker->id,
-                            'name' => $tool->currentCheckout->worker->name,
-                            'badge_number' => $tool->currentCheckout->worker->badge_number,
+                            'first_name' => $tool->currentCheckout->worker->first_name,
+                            'last_name' => $tool->currentCheckout->worker->last_name,
                         ],
                         'checked_out_at' => $tool->currentCheckout->checked_out_at->toIso8601String(),
                         'expected_return_at' => $tool->currentCheckout->expected_return_at?->toIso8601String(),
@@ -79,10 +82,10 @@ class ScannerController extends Controller
                 ],
             ]);
 
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Error processing QR code: ' . $e->getMessage(),
+                'message' => 'Error processing QR code: '.$e->getMessage(),
             ], 500);
         }
     }
@@ -97,13 +100,14 @@ class ScannerController extends Controller
         $workers = Worker::active()
             ->when($search, function ($query, $search) {
                 $query->where(function ($q) use ($search) {
-                    $q->where('name', 'like', "%{$search}%")
-                      ->orWhere('badge_number', 'like', "%{$search}%");
+                    $q->where('first_name', 'like', "%{$search}%")
+                        ->orWhere('last_name', 'like', "%{$search}%")
+                        ->orWhere('email', 'like', "%{$search}%");
                 });
             })
-            ->orderBy('name')
+            ->orderBy('last_name')
             ->limit(50)
-            ->get(['id', 'name', 'badge_number', 'department']);
+            ->get(['id', 'first_name', 'last_name', 'email']);
 
         return response()->json([
             'success' => true,
@@ -146,14 +150,14 @@ class ScannerController extends Controller
                         'code' => $checkout->tool->code,
                     ],
                     'worker' => [
-                        'name' => $checkout->worker->name,
-                        'badge_number' => $checkout->worker->badge_number,
+                        'first_name' => $checkout->worker->first_name,
+                        'last_name' => $checkout->worker->last_name,
                     ],
                     'checked_out_at' => $checkout->checked_out_at->toIso8601String(),
                 ],
             ]);
 
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             return response()->json([
                 'success' => false,
                 'message' => $e->getMessage(),
@@ -198,7 +202,7 @@ class ScannerController extends Controller
                 ],
             ]);
 
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             return response()->json([
                 'success' => false,
                 'message' => $e->getMessage(),

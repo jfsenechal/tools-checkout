@@ -49,48 +49,38 @@ final class DatabaseSeeder extends Seeder
     {
         $workers = [
             [
-                'name' => 'John Smith',
-                'badge_number' => 'EMP001',
+                'first_name' => 'John',
+                'last_name' => 'Smith',
                 'email' => 'john.smith@example.com',
                 'phone' => '555-0101',
-                'department' => 'Construction',
-                'position' => 'Foreman',
                 'status' => 'active',
             ],
             [
-                'name' => 'Maria Garcia',
-                'badge_number' => 'EMP002',
+                'first_name' => 'Maria',
+                'last_name' => 'Garcia',
                 'email' => 'maria.garcia@example.com',
                 'phone' => '555-0102',
-                'department' => 'Maintenance',
-                'position' => 'Technician',
                 'status' => 'active',
             ],
             [
-                'name' => 'David Chen',
-                'badge_number' => 'EMP003',
+                'first_name' => 'David',
+                'last_name' => 'Chen',
                 'email' => 'david.chen@example.com',
                 'phone' => '555-0103',
-                'department' => 'Construction',
-                'position' => 'Carpenter',
                 'status' => 'active',
             ],
             [
-                'name' => 'Sarah Johnson',
-                'badge_number' => 'EMP004',
+                'first_name' => 'Sarah',
+                'last_name' => 'Johnson',
                 'email' => 'sarah.johnson@example.com',
                 'phone' => '555-0104',
-                'department' => 'Electrical',
-                'position' => 'Electrician',
                 'status' => 'active',
             ],
             [
-                'name' => 'Michael Brown',
-                'badge_number' => 'EMP005',
+                'first_name' => 'Michael',
+                'last_name' => 'Brown',
                 'email' => 'michael.brown@example.com',
                 'phone' => '555-0105',
-                'department' => 'Plumbing',
-                'position' => 'Plumber',
                 'status' => 'active',
             ],
         ];
@@ -318,5 +308,4 @@ final class DatabaseSeeder extends Seeder
             'return_notes' => 'Minor wear, still functional',
         ]);
     }
-
 }
