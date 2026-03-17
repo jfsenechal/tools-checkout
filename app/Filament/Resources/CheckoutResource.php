@@ -190,7 +190,7 @@ final class CheckoutResource extends Resource
                     ->preload(),
 
                 Tables\Filters\SelectFilter::make('worker')
-                    ->relationship('worker', 'name')
+                    ->relationship('worker', 'last_name')
                     ->searchable()
                     ->preload(),
             ])
