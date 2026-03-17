@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Filament\Resources\Checkout\Schemas;
 
+use App\Enums\StatusToolEnum;
 use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
@@ -21,7 +22,7 @@ final class CheckoutForm
                     ->schema([
                         Select::make('tool_id')
                             ->label('Outil')
-                            ->relationship('tool', 'name', fn (Builder $query) => $query->where('status', 'available'))
+                            ->relationship('tool', 'name', fn (Builder $query) => $query->where('status', StatusToolEnum::Available))
                             ->searchable()
                             ->preload()
                             ->required()

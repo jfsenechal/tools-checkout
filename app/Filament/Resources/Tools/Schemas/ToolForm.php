@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Filament\Resources\Tools\Schemas;
 
+use App\Enums\StatusToolEnum;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
@@ -39,13 +40,8 @@ final class ToolForm
 
                         Select::make('status')
                             ->label('Statut')
-                            ->options([
-                                'available' => 'Disponible',
-                                'checked_out' => 'Emprunté',
-                                'maintenance' => 'En maintenance',
-                                'retired' => 'Retiré',
-                            ])
-                            ->default('available')
+                            ->options(StatusToolEnum::class)
+                            ->default(StatusToolEnum::Available)
                             ->required()
                             ->native(false),
 

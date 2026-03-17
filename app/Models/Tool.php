@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use App\Enums\StatusToolEnum;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -24,9 +25,6 @@ final class Tool extends Model
         'status',
         'manufacturer',
         'model',
-    ];
-
-    protected $casts = [
     ];
 
     public function getActivitylogOptions(): LogOptions
@@ -53,12 +51,12 @@ final class Tool extends Model
     // Scopes
     public function scopeAvailable($query)
     {
-        return $query->where('status', 'available');
+        return $query->where('status', StatusToolEnum::Available);
     }
 
     public function scopeCheckedOut($query)
     {
-        return $query->where('status', 'checked_out');
+        return $query->where('status', StatusToolEnum::CheckedOut);
     }
 
     public function scopeByCategory($query, string $category)
@@ -69,12 +67,12 @@ final class Tool extends Model
     // Accessors & Mutators
     public function getIsAvailableAttribute(): bool
     {
-        return $this->status === 'available';
+        return $this->status === StatusToolEnum::Available;
     }
 
     public function getIsCheckedOutAttribute(): bool
     {
-        return $this->status === 'checked_out';
+        return $this->status === StatusToolEnum::CheckedOut;
     }
 
     public function getQrCodeUrlAttribute(): string
@@ -87,16 +85,23 @@ final class Tool extends Model
     // Methods
     public function markAsCheckedOut(): void
     {
-        $this->update(['status' => 'checked_out']);
+        $this->update(['status' => StatusToolEnum::CheckedOut]);
     }
 
     public function markAsAvailable(): void
     {
-        $this->update(['status' => 'available']);
+        $this->update(['status' => StatusToolEnum::Available]);
     }
 
     public function markAsInMaintenance(): void
     {
-        $this->update(['status' => 'maintenance']);
+        $this->update(['status' => StatusToolEnum::Maintenance]);
+    }
+
+    protected function casts(): array
+    {
+        return [
+            'status' => StatusToolEnum::class,
+        ];
     }
 }

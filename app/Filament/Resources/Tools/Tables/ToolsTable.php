@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Filament\Resources\Tools\Tables;
 
+use App\Enums\StatusToolEnum;
 use App\Filament\Resources\Tools\Actions\GenerateQrAction;
 use App\Filament\Resources\Tools\Actions\GenerateQrCodesBulkAction;
 use App\Filament\Resources\Tools\Actions\ViewQrAction;
@@ -37,12 +38,6 @@ final class ToolsTable
                 Tables\Columns\TextColumn::make('status')
                     ->label('Statut')
                     ->badge()
-                    ->color(fn (string $state): string => match ($state) {
-                        'available' => 'success',
-                        'checked_out' => 'warning',
-                        'maintenance' => 'info',
-                        'retired' => 'danger',
-                    })
                     ->sortable(),
 
                 Tables\Columns\IconColumn::make('qr_code')
@@ -59,12 +54,7 @@ final class ToolsTable
             ->filters([
                 Tables\Filters\SelectFilter::make('status')
                     ->label('Statut')
-                    ->options([
-                        'available' => 'Disponible',
-                        'checked_out' => 'Emprunté',
-                        'maintenance' => 'En maintenance',
-                        'retired' => 'Retiré',
-                    ])
+                    ->options(StatusToolEnum::class)
                     ->multiple(),
 
                 Tables\Filters\SelectFilter::make('category')

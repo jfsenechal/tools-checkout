@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Enums\StatusToolEnum;
 use App\Models\Checkout;
 use App\Models\Tool;
 use App\Models\Worker;
@@ -17,7 +18,7 @@ it('returns active checkouts for a worker', function () {
     $tool = Tool::create([
         'name' => 'Test Drill',
         'category' => 'Power Tools',
-        'status' => 'checked_out',
+        'status' => StatusToolEnum::CheckedOut,
     ]);
 
     Checkout::create([
@@ -46,7 +47,7 @@ it('excludes returned checkouts', function () {
     $tool = Tool::create([
         'name' => 'Returned Drill',
         'category' => 'Power Tools',
-        'status' => 'available',
+        'status' => StatusToolEnum::Available,
     ]);
 
     Checkout::create([
@@ -73,7 +74,7 @@ it('scans a worker QR code and returns worker with checkouts', function () {
     $tool = Tool::create([
         'name' => 'Hammer',
         'category' => 'Hand Tools',
-        'status' => 'checked_out',
+        'status' => StatusToolEnum::CheckedOut,
     ]);
 
     Checkout::create([
