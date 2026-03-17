@@ -165,6 +165,39 @@ final class ScannerController extends Controller
     }
 
     /**
+     * Get tools currently checked out by a worker
+     */
+    public function workerTools(Worker $worker): JsonResponse
+    {
+        $checkouts = $worker->activeCheckouts()
+            ->with('tool')
+            ->orderByDesc('checked_out_at')
+            ->get();
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'worker' => [
+                    'id' => $worker->id,
+                    'first_name' => $worker->first_name,
+                    'last_name' => $worker->last_name,
+                ],
+                'checkouts' => $checkouts->map(fn ($checkout) => [
+                    'id' => $checkout->id,
+                    'tool' => [
+                        'id' => $checkout->tool->id,
+                        'name' => $checkout->tool->name,
+                        'category' => $checkout->tool->category,
+                    ],
+                    'checked_out_at' => $checkout->checked_out_at->toIso8601String(),
+                    'expected_return_at' => $checkout->expected_return_at?->toIso8601String(),
+                    'is_overdue' => $checkout->is_overdue,
+                ]),
+            ],
+        ]);
+    }
+
+    /**
      * Return a tool
      */
     public function return(Request $request, ReturnToolAction $action): JsonResponse

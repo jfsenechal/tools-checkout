@@ -10,4 +10,5 @@ Route::prefix('scanner')->group(function () {
     Route::get('/workers', [ScannerController::class, 'workers'])->name('scanner.workers');
     Route::post('/checkout', [ScannerController::class, 'checkout'])->name('scanner.checkout');
     Route::post('/return', [ScannerController::class, 'return'])->name('scanner.return');
+    Route::get('/workers/{worker}/tools', [ScannerController::class, 'workerTools'])->name('scanner.worker-tools');
 });

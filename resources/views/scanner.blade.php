@@ -50,8 +50,26 @@
 
     <main class="container mx-auto px-4 py-6 max-w-2xl">
 
-        <!-- Scanner Section -->
-        <div x-show="!scannedTool" class="bg-white rounded-lg shadow-lg p-6 mb-6">
+        <!-- Mode Toggle -->
+        <div class="bg-white rounded-lg shadow-lg p-2 mb-6 flex">
+            <button
+                @click="switchMode('tool-first')"
+                class="flex-1 py-3 px-4 rounded-lg font-semibold text-center transition"
+                :class="mode === 'tool-first' ? 'bg-blue-600 text-white' : 'text-gray-600 hover:bg-gray-100'">
+                Tool &rarr; Worker
+            </button>
+            <button
+                @click="switchMode('worker-first')"
+                class="flex-1 py-3 px-4 rounded-lg font-semibold text-center transition"
+                :class="mode === 'worker-first' ? 'bg-blue-600 text-white' : 'text-gray-600 hover:bg-gray-100'">
+                Worker &rarr; Tool
+            </button>
+        </div>
+
+        <!-- ===================== TOOL-FIRST MODE ===================== -->
+
+        <!-- Scanner Section (Tool-First) -->
+        <div x-show="mode === 'tool-first' && !scannedTool" class="bg-white rounded-lg shadow-lg p-6 mb-6">
             <h2 class="text-xl font-semibold mb-4 text-gray-800">Scan Tool QR Code</h2>
 
             <!-- Camera View -->
@@ -88,8 +106,8 @@
             </div>
         </div>
 
-        <!-- Tool Information -->
-        <div x-show="scannedTool" x-cloak class="bg-white rounded-lg shadow-lg p-6 mb-6">
+        <!-- Tool Information (Tool-First) -->
+        <div x-show="mode === 'tool-first' && scannedTool" x-cloak class="bg-white rounded-lg shadow-lg p-6 mb-6">
             <div class="flex justify-between items-start mb-4">
                 <h2 class="text-xl font-semibold text-gray-800">Tool Information</h2>
                 <button @click="reset()" class="text-gray-500 hover:text-gray-700">
@@ -161,7 +179,117 @@
             </div>
         </div>
 
-        <!-- Worker Selection Modal -->
+        <!-- ===================== WORKER-FIRST MODE ===================== -->
+
+        <!-- Worker Selection (Worker-First) -->
+        <div x-show="mode === 'worker-first' && !selectedWorker" class="bg-white rounded-lg shadow-lg p-6 mb-6">
+            <h2 class="text-xl font-semibold mb-4 text-gray-800">Select Worker</h2>
+
+            <input
+                type="text"
+                x-model="workerSearch"
+                @input="searchWorkers()"
+                placeholder="Search by name or email..."
+                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent mb-4">
+
+            <template x-if="loadingWorkers">
+                <div class="text-center py-8">
+                    <div class="inline-block animate-spin rounded-full h-8 w-8 border-4 border-blue-500 border-t-transparent"></div>
+                </div>
+            </template>
+
+            <div class="space-y-2 max-h-96 overflow-y-auto">
+                <template x-for="worker in workers" :key="worker.id">
+                    <button
+                        @click="selectWorkerFirst(worker)"
+                        class="w-full text-left p-4 border border-gray-200 rounded-lg hover:bg-blue-50 hover:border-blue-300 transition">
+                        <p class="font-semibold" x-text="worker.first_name + ' ' + worker.last_name"></p>
+                        <p class="text-sm text-gray-500" x-text="worker.email"></p>
+                    </button>
+                </template>
+            </div>
+        </div>
+
+        <!-- Worker Info + Tools (Worker-First) -->
+        <div x-show="mode === 'worker-first' && selectedWorker" x-cloak class="space-y-6">
+            <!-- Selected Worker Card -->
+            <div class="bg-white rounded-lg shadow-lg p-6">
+                <div class="flex justify-between items-start mb-4">
+                    <h2 class="text-xl font-semibold text-gray-800">Worker</h2>
+                    <button @click="resetWorkerFirst()" class="text-gray-500 hover:text-gray-700">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                    </button>
+                </div>
+                <p class="text-lg font-semibold" x-text="selectedWorker?.first_name + ' ' + selectedWorker?.last_name"></p>
+                <p class="text-sm text-gray-500" x-text="selectedWorker?.email"></p>
+            </div>
+
+            <!-- Worker's Active Checkouts -->
+            <div x-show="workerCheckouts.length > 0" class="bg-white rounded-lg shadow-lg p-6">
+                <h3 class="text-lg font-semibold text-gray-800 mb-4">Checked Out Tools</h3>
+                <div class="space-y-3">
+                    <template x-for="checkout in workerCheckouts" :key="checkout.id">
+                        <div class="flex items-center justify-between p-4 border border-gray-200 rounded-lg">
+                            <div>
+                                <p class="font-semibold" x-text="checkout.tool.name"></p>
+                                <p class="text-sm text-gray-500" x-text="checkout.tool.category || 'N/A'"></p>
+                                <p class="text-xs text-gray-400">Since: <span x-text="formatDate(checkout.checked_out_at)"></span></p>
+                                <span
+                                    x-show="checkout.is_overdue"
+                                    class="inline-block mt-1 px-2 py-0.5 bg-red-100 text-red-800 text-xs font-bold rounded">
+                                    OVERDUE
+                                </span>
+                            </div>
+                            <button
+                                @click="returnToolFromWorker(checkout)"
+                                class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-blue-700 transition">
+                                Return
+                            </button>
+                        </div>
+                    </template>
+                </div>
+            </div>
+
+            <!-- Scan Tool for Checkout (Worker-First) -->
+            <div class="bg-white rounded-lg shadow-lg p-6">
+                <h3 class="text-lg font-semibold text-gray-800 mb-4">Scan Tool to Checkout</h3>
+
+                <!-- Camera View -->
+                <div x-show="cameraActive" class="relative mb-4">
+                    <video id="video2" class="w-full rounded-lg bg-black" style="transform: scaleX(-1)" playsinline></video>
+                    <canvas id="canvas2" class="hidden"></canvas>
+                    <div class="absolute inset-0 border-4 border-blue-500 border-dashed rounded-lg pointer-events-none"></div>
+                </div>
+
+                <div class="flex gap-2">
+                    <button
+                        @click="startCamera()"
+                        x-show="!cameraActive"
+                        class="flex-1 bg-green-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-green-700 transition flex items-center justify-center gap-2">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                        </svg>
+                        Scan Tool
+                    </button>
+
+                    <button
+                        @click="stopCamera()"
+                        x-show="cameraActive"
+                        class="flex-1 bg-red-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-red-700 transition">
+                        Stop Camera
+                    </button>
+                </div>
+
+                <div x-show="scanning && cameraActive" class="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                    <p class="text-blue-800 text-center">Scanning for QR code...</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Worker Selection Modal (Tool-First) -->
         <div
             x-show="showWorkerSelection"
             x-cloak
@@ -229,11 +357,14 @@
     <script>
         function scannerApp() {
             return {
+                mode: 'tool-first',
                 cameraActive: false,
                 scanning: false,
                 scannedTool: null,
                 currentCheckout: null,
                 showWorkerSelection: false,
+                selectedWorker: null,
+                workerCheckouts: [],
                 workers: [],
                 workerSearch: '',
                 loadingWorkers: false,
@@ -244,9 +375,7 @@
                 scanInterval: null,
 
                 init() {
-                    this.video = document.getElementById('video');
-                    this.canvas = document.getElementById('canvas');
-                    this.canvasContext = this.canvas.getContext('2d');
+                    this.initCameraElements();
 
                     // Register service worker for offline support
                     if ('serviceWorker' in navigator) {
@@ -259,7 +388,34 @@
                     this.loadWorkers();
                 },
 
+                initCameraElements() {
+                    if (this.mode === 'worker-first' && this.selectedWorker) {
+                        this.video = document.getElementById('video2');
+                        this.canvas = document.getElementById('canvas2');
+                    } else {
+                        this.video = document.getElementById('video');
+                        this.canvas = document.getElementById('canvas');
+                    }
+                    if (this.canvas) {
+                        this.canvasContext = this.canvas.getContext('2d');
+                    }
+                },
+
+                switchMode(newMode) {
+                    if (this.mode === newMode) return;
+                    this.stopCamera();
+                    this.mode = newMode;
+                    this.scannedTool = null;
+                    this.currentCheckout = null;
+                    this.showWorkerSelection = false;
+                    this.selectedWorker = null;
+                    this.workerCheckouts = [];
+                    this.workerSearch = '';
+                    this.loadWorkers();
+                },
+
                 async startCamera() {
+                    this.initCameraElements();
                     try {
                         const stream = await navigator.mediaDevices.getUserMedia({
                             video: { facingMode: 'environment' }
@@ -334,8 +490,13 @@
                         const result = await response.json();
 
                         if (result.success) {
-                            this.scannedTool = result.data.tool;
-                            this.currentCheckout = result.data.current_checkout;
+                            if (this.mode === 'worker-first' && this.selectedWorker) {
+                                // Worker-first: auto-checkout scanned tool
+                                await this.checkoutToolForWorker(result.data.tool);
+                            } else {
+                                this.scannedTool = result.data.tool;
+                                this.currentCheckout = result.data.current_checkout;
+                            }
                         } else {
                             this.showMessage(result.message, 'error');
                             setTimeout(() => this.startCamera(), 2000);
@@ -430,6 +591,95 @@
                     } catch (error) {
                         this.showMessage('Error returning tool', 'error');
                     }
+                },
+
+                async selectWorkerFirst(worker) {
+                    this.selectedWorker = worker;
+                    await this.loadWorkerTools(worker.id);
+                    this.$nextTick(() => this.initCameraElements());
+                },
+
+                async loadWorkerTools(workerId) {
+                    try {
+                        const response = await fetch(`/api/scanner/workers/${workerId}/tools`);
+                        const result = await response.json();
+                        if (result.success) {
+                            this.workerCheckouts = result.data.checkouts;
+                        }
+                    } catch (error) {
+                        console.error('Error loading worker tools:', error);
+                    }
+                },
+
+                async checkoutToolForWorker(tool) {
+                    if (!tool.is_available) {
+                        this.showMessage('Tool is not available for checkout', 'error');
+                        setTimeout(() => this.startCamera(), 2000);
+                        return;
+                    }
+
+                    try {
+                        const response = await fetch('/api/scanner/checkout', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Accept': 'application/json'
+                            },
+                            body: JSON.stringify({
+                                tool_id: tool.id,
+                                worker_id: this.selectedWorker.id
+                            })
+                        });
+
+                        const result = await response.json();
+
+                        if (result.success) {
+                            this.showMessage('Tool checked out successfully!', 'success');
+                            await this.loadWorkerTools(this.selectedWorker.id);
+                            setTimeout(() => this.startCamera(), 2000);
+                        } else {
+                            this.showMessage(result.message, 'error');
+                            setTimeout(() => this.startCamera(), 2000);
+                        }
+                    } catch (error) {
+                        this.showMessage('Error checking out tool', 'error');
+                        setTimeout(() => this.startCamera(), 2000);
+                    }
+                },
+
+                async returnToolFromWorker(checkout) {
+                    if (!confirm('Return this tool?')) return;
+
+                    try {
+                        const response = await fetch('/api/scanner/return', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Accept': 'application/json'
+                            },
+                            body: JSON.stringify({
+                                checkout_id: checkout.id
+                            })
+                        });
+
+                        const result = await response.json();
+
+                        if (result.success) {
+                            this.showMessage('Tool returned successfully!', 'success');
+                            await this.loadWorkerTools(this.selectedWorker.id);
+                        } else {
+                            this.showMessage(result.message, 'error');
+                        }
+                    } catch (error) {
+                        this.showMessage('Error returning tool', 'error');
+                    }
+                },
+
+                resetWorkerFirst() {
+                    this.stopCamera();
+                    this.selectedWorker = null;
+                    this.workerCheckouts = [];
+                    this.workerSearch = '';
                 },
 
                 reset() {
