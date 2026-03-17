@@ -90,6 +90,78 @@ final class ScannerController extends Controller
     }
 
     /**
+     * Scan a QR code and get worker information
+     */
+    public function scanWorker(Request $request): JsonResponse
+    {
+        $validator = Validator::make($request->all(), [
+            'qr_data' => 'required|string',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Invalid QR code data',
+                'errors' => $validator->errors(),
+            ], 422);
+        }
+
+        try {
+            $qrData = json_decode($request->qr_data, true);
+
+            if (! isset($qrData['type']) || $qrData['type'] !== 'worker') {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Invalid QR code type — expected worker',
+                ], 400);
+            }
+
+            $worker = Worker::active()->find($qrData['id']);
+
+            if (! $worker) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Worker not found or inactive',
+                ], 404);
+            }
+
+            $checkouts = $worker->activeCheckouts()
+                ->with('tool')
+                ->orderByDesc('checked_out_at')
+                ->get();
+
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'worker' => [
+                        'id' => $worker->id,
+                        'first_name' => $worker->first_name,
+                        'last_name' => $worker->last_name,
+                        'email' => $worker->email,
+                    ],
+                    'checkouts' => $checkouts->map(fn ($checkout) => [
+                        'id' => $checkout->id,
+                        'tool' => [
+                            'id' => $checkout->tool->id,
+                            'name' => $checkout->tool->name,
+                            'category' => $checkout->tool->category,
+                        ],
+                        'checked_out_at' => $checkout->checked_out_at->toIso8601String(),
+                        'expected_return_at' => $checkout->expected_return_at?->toIso8601String(),
+                        'is_overdue' => $checkout->is_overdue,
+                    ]),
+                ],
+            ]);
+
+        } catch (Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error processing QR code: '.$e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
      * Get list of active workers
      */
     public function workers(Request $request): JsonResponse
