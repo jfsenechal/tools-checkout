@@ -1,7 +1,8 @@
 <?php
 
-namespace App\Filament\Resources\CheckoutResource\Pages;
+namespace App\Filament\Resources\Checkout\Pages;
 
+use App\Filament\Resources\Checkout;
 use App\Filament\Resources\CheckoutResource;
 use Filament\Actions;
 use Filament\Resources\Pages\ListRecords;

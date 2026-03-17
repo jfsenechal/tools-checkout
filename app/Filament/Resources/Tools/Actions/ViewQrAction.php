@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\Filament\Resources\ToolResource\Actions;
+namespace App\Filament\Resources\Tools\Actions;
 
 use App\Models\Tool;
 use Filament\Actions\Action;

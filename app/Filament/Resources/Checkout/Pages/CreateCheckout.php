@@ -1,7 +1,8 @@
 <?php
 
-namespace App\Filament\Resources\CheckoutResource\Pages;
+namespace App\Filament\Resources\Checkout\Pages;
 
+use App\Filament\Resources\Checkout;
 use App\Filament\Resources\CheckoutResource;
 use Filament\Resources\Pages\CreateRecord;
 
@@ -12,7 +13,7 @@ class CreateCheckout extends CreateRecord
     protected function mutateFormDataBeforeCreate(array $data): array
     {
         $data['checked_out_by'] = auth()->id();
-        
+
         return $data;
     }
 

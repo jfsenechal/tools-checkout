@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\Filament\Resources\CheckoutResource\Actions;
+namespace App\Filament\Resources\Checkout\Actions;
 
 use App\Models\Checkout;
 use Filament\Actions\Action;

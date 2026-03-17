@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace App\Filament\Resources;
 
-use App\Filament\Resources\WorkerResource\Pages;
-use App\Filament\Resources\WorkerResource\Schemas\WorkerForm;
-use App\Filament\Resources\WorkerResource\Tables\WorkersTable;
+use App\Filament\Resources\Workers\Pages;
+use App\Filament\Resources\Workers\Schemas\WorkerForm;
+use App\Filament\Resources\Workers\Tables\WorkersTable;
 use App\Models\Worker;
 use BackedEnum;
 use Filament\Resources\Resource;

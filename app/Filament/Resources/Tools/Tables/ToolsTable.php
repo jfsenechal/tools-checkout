@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-namespace App\Filament\Resources\ToolResource\Tables;
+namespace App\Filament\Resources\Tools\Tables;
 
-use App\Filament\Resources\ToolResource\Actions\GenerateQrAction;
-use App\Filament\Resources\ToolResource\Actions\GenerateQrCodesBulkAction;
-use App\Filament\Resources\ToolResource\Actions\ViewQrAction;
+use App\Filament\Resources\Tools\Actions\GenerateQrAction;
+use App\Filament\Resources\Tools\Actions\GenerateQrCodesBulkAction;
+use App\Filament\Resources\Tools\Actions\ViewQrAction;
 use App\Models\Tool;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteAction;

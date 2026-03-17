@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\Filament\Resources\WorkerResource\Schemas;
+namespace App\Filament\Resources\Workers\Schemas;
 
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;

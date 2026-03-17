@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\Filament\Resources\ToolResource\Actions;
+namespace App\Filament\Resources\Tools\Actions;
 
 use App\Services\QRCodeService;
 use Filament\Actions\BulkAction;

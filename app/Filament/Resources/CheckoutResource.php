@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace App\Filament\Resources;
 
-use App\Filament\Resources\CheckoutResource\Pages;
-use App\Filament\Resources\CheckoutResource\Schemas\CheckoutForm;
-use App\Filament\Resources\CheckoutResource\Tables\CheckoutsTable;
+use App\Filament\Resources\Checkout\Pages;
+use App\Filament\Resources\Checkout\Schemas\CheckoutForm;
+use App\Filament\Resources\Checkout\Tables\CheckoutsTable;
 use App\Models\Checkout;
 use BackedEnum;
 use Filament\Resources\Resource;

@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace App\Filament\Resources\CheckoutResource\Tables;
+namespace App\Filament\Resources\Checkout\Tables;
 
-use App\Filament\Resources\CheckoutResource\Actions\ReturnToolAction;
+use App\Filament\Resources\Checkout\Actions\ReturnToolAction;
 use App\Models\Checkout;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
