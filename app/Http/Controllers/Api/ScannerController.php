@@ -46,8 +46,7 @@ final class ScannerController extends Controller
             }
 
             $tool = Tool::with('currentCheckout.worker')
-                ->where('code', $qrData['code'])
-                ->first();
+                ->find($qrData['id']);
 
             if (! $tool) {
                 return response()->json([
@@ -62,7 +61,7 @@ final class ScannerController extends Controller
                     'tool' => [
                         'id' => $tool->id,
                         'name' => $tool->name,
-                        'code' => $tool->code,
+
                         'category' => $tool->category,
                         'status' => $tool->status,
                         'is_available' => $tool->is_available,
@@ -147,7 +146,7 @@ final class ScannerController extends Controller
                     'checkout_id' => $checkout->id,
                     'tool' => [
                         'name' => $checkout->tool->name,
-                        'code' => $checkout->tool->code,
+
                     ],
                     'worker' => [
                         'first_name' => $checkout->worker->first_name,
@@ -195,7 +194,7 @@ final class ScannerController extends Controller
                     'checkout_id' => $checkout->id,
                     'tool' => [
                         'name' => $checkout->tool->name,
-                        'code' => $checkout->tool->code,
+
                         'status' => $checkout->tool->status,
                     ],
                     'returned_at' => $checkout->returned_at->toIso8601String(),

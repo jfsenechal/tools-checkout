@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -10,34 +12,27 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Traits\LogsActivity;
 
-class Tool extends Model
+final class Tool extends Model
 {
-    use HasFactory, SoftDeletes, LogsActivity;
+    use HasFactory, LogsActivity, SoftDeletes;
 
     protected $fillable = [
         'name',
-        'code',
         'qr_code',
         'category',
         'description',
         'status',
-        'location',
-        'purchase_price',
-        'purchase_date',
         'manufacturer',
         'model',
-        'notes',
     ];
 
     protected $casts = [
-        'purchase_price' => 'decimal:2',
-        'purchase_date' => 'date',
     ];
 
     public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()
-            ->logOnly(['name', 'code', 'status', 'category'])
+            ->logOnly(['name', 'status', 'category'])
             ->logOnlyDirty()
             ->dontSubmitEmptyLogs();
     }
@@ -85,7 +80,7 @@ class Tool extends Model
     public function getQrCodeUrlAttribute(): string
     {
         return $this->qr_code
-            ? asset('storage/qrcodes/' . $this->qr_code)
+            ? asset('storage/qrcodes/'.$this->qr_code)
             : '';
     }
 

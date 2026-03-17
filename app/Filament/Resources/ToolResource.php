@@ -1,10 +1,13 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\ToolResource\Pages;
 use App\Models\Tool;
 use App\Services\QRCodeService;
+use BackedEnum;
 use Filament\Actions\Action;
 use Filament\Actions\BulkAction;
 use Filament\Actions\BulkActionGroup;
@@ -12,21 +15,21 @@ use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Forms;
-use Filament\Forms\Form;
 use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
 use Filament\Tables;
 use Filament\Tables\Table;
+use UnitEnum;
 
-class ToolResource extends Resource
+final class ToolResource extends Resource
 {
     protected static ?string $model = Tool::class;
 
-    protected static string|null|\BackedEnum $navigationIcon = 'heroicon-o-wrench-screwdriver';
+    protected static string|null|BackedEnum $navigationIcon = 'heroicon-o-wrench-screwdriver';
 
-    protected static string|null|\UnitEnum $navigationGroup = 'Inventory';
+    protected static string|null|UnitEnum $navigationGroup = 'Inventory';
 
     protected static ?int $navigationSort = 1;
 
@@ -40,12 +43,6 @@ class ToolResource extends Resource
                             ->required()
                             ->maxLength(255)
                             ->columnSpanFull(),
-
-                        Forms\Components\TextInput::make('code')
-                            ->required()
-                            ->unique(ignoreRecord: true)
-                            ->maxLength(255)
-                            ->helperText('Unique identifier for this tool'),
 
                         Forms\Components\Select::make('category')
                             ->options([
@@ -70,10 +67,6 @@ class ToolResource extends Resource
                             ->required()
                             ->native(false),
 
-                        Forms\Components\TextInput::make('location')
-                            ->maxLength(255)
-                            ->helperText('Storage location or bin number'),
-
                         Forms\Components\Textarea::make('description')
                             ->rows(3)
                             ->columnSpanFull(),
@@ -86,25 +79,8 @@ class ToolResource extends Resource
 
                         Forms\Components\TextInput::make('model')
                             ->maxLength(255),
-
-                        Forms\Components\TextInput::make('purchase_price')
-                            ->numeric()
-                            ->prefix('$')
-                            ->maxValue(99999999.99),
-
-                        Forms\Components\DatePicker::make('purchase_date')
-                            ->native(false),
                     ])->columns(2)
                     ->collapsible(),
-
-                Section::make('Additional Notes')
-                    ->schema([
-                        Forms\Components\Textarea::make('notes')
-                            ->rows(3)
-                            ->columnSpanFull(),
-                    ])
-                    ->collapsible()
-                    ->collapsed(),
             ]);
     }
 
@@ -112,15 +88,10 @@ class ToolResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('code')
-                    ->searchable()
-                    ->sortable()
-                    ->weight('bold'),
-
                 Tables\Columns\TextColumn::make('name')
                     ->searchable()
                     ->sortable()
-                    ->description(fn(Tool $record): string => $record->description ?? ''),
+                    ->description(fn (Tool $record): string => $record->description ?? ''),
 
                 Tables\Columns\TextColumn::make('category')
                     ->badge()
@@ -129,17 +100,13 @@ class ToolResource extends Resource
 
                 Tables\Columns\TextColumn::make('status')
                     ->badge()
-                    ->color(fn(string $state): string => match ($state) {
+                    ->color(fn (string $state): string => match ($state) {
                         'available' => 'success',
                         'checked_out' => 'warning',
                         'maintenance' => 'info',
                         'retired' => 'danger',
                     })
                     ->sortable(),
-
-                Tables\Columns\TextColumn::make('location')
-                    ->searchable()
-                    ->toggleable(),
 
                 Tables\Columns\IconColumn::make('qr_code')
                     ->boolean()
@@ -185,14 +152,14 @@ class ToolResource extends Resource
                             ->success()
                             ->send();
                     })
-                    ->visible(fn(Tool $record) => !$record->qr_code),
+                    ->visible(fn (Tool $record) => ! $record->qr_code),
 
                 Action::make('view_qr')
                     ->label('View QR')
                     ->icon('heroicon-o-eye')
-                    ->url(fn(Tool $record): string => $record->qr_code_url)
+                    ->url(fn (Tool $record): string => $record->qr_code_url)
                     ->openUrlInNewTab()
-                    ->visible(fn(Tool $record) => $record->qr_code),
+                    ->visible(fn (Tool $record) => $record->qr_code),
 
                 EditAction::make(),
                 DeleteAction::make(),

@@ -1,12 +1,14 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Services;
 
 use App\Models\Tool;
 use Illuminate\Support\Facades\Storage;
 use SimpleSoftwareIO\QrCode\Facades\QrCode;
 
-class QRCodeService
+final class QRCodeService
 {
     /**
      * Generate QR code for a tool
@@ -16,10 +18,9 @@ class QRCodeService
         $qrCodeData = json_encode([
             'type' => 'tool',
             'id' => $tool->id,
-            'code' => $tool->code,
         ]);
 
-        $filename = 'tool-' . $tool->code . '-' . time() . '.svg';
+        $filename = 'tool-'.$tool->id.'-'.time().'.svg';
 
         $qrCode = QrCode::format('svg')
             ->size(300)
@@ -27,7 +28,7 @@ class QRCodeService
             ->errorCorrection('H')
             ->generate($qrCodeData);
 
-        Storage::disk('public')->put('qrcodes/' . $filename, $qrCode);
+        Storage::disk('public')->put('qrcodes/'.$filename, $qrCode);
 
         return $filename;
     }
@@ -58,7 +59,7 @@ class QRCodeService
     {
         // Delete old QR code if exists
         if ($tool->qr_code) {
-            Storage::disk('public')->delete('qrcodes/' . $tool->qr_code);
+            Storage::disk('public')->delete('qrcodes/'.$tool->qr_code);
         }
 
         $filename = $this->generateForTool($tool);
@@ -73,10 +74,11 @@ class QRCodeService
     public function deleteForTool(Tool $tool): bool
     {
         if ($tool->qr_code) {
-            $deleted = Storage::disk('public')->delete('qrcodes/' . $tool->qr_code);
+            $deleted = Storage::disk('public')->delete('qrcodes/'.$tool->qr_code);
             if ($deleted) {
                 $tool->update(['qr_code' => null]);
             }
+
             return $deleted;
         }
 

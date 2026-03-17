@@ -105,10 +105,6 @@
                     <p class="text-lg font-semibold" x-text="scannedTool?.name"></p>
                 </div>
                 <div>
-                    <span class="text-sm text-gray-500">Tool Code</span>
-                    <p class="text-lg font-mono" x-text="scannedTool?.code"></p>
-                </div>
-                <div>
                     <span class="text-sm text-gray-500">Category</span>
                     <p x-text="scannedTool?.category || 'N/A'"></p>
                 </div>

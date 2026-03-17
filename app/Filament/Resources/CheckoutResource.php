@@ -115,12 +115,6 @@ final class CheckoutResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('tool.code')
-                    ->label('Tool Code')
-                    ->searchable()
-                    ->sortable()
-                    ->weight('bold'),
-
                 Tables\Columns\TextColumn::make('tool.name')
                     ->label('Tool Name')
                     ->searchable()
