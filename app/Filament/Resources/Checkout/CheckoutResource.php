@@ -2,9 +2,8 @@
 
 declare(strict_types=1);
 
-namespace App\Filament\Resources;
+namespace App\Filament\Resources\Checkout;
 
-use App\Filament\Resources\Checkout\Pages;
 use App\Filament\Resources\Checkout\Schemas\CheckoutForm;
 use App\Filament\Resources\Checkout\Tables\CheckoutsTable;
 use App\Models\Checkout;

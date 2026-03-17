@@ -2,8 +2,7 @@
 
 namespace App\Filament\Resources\Checkout\Pages;
 
-use App\Filament\Resources\Checkout;
-use App\Filament\Resources\CheckoutResource;
+use App\Filament\Resources\Checkout\CheckoutResource;
 use Filament\Actions;
 use Filament\Resources\Pages\ListRecords;
 

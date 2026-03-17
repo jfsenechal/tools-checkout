@@ -2,8 +2,7 @@
 
 namespace App\Filament\Resources\Tools\Pages;
 
-use App\Filament\Resources\ToolResource;
-use App\Filament\Resources\Tools;
+use App\Filament\Resources\Tools\ToolResource;
 use Filament\Actions;
 use Filament\Resources\Pages\ListRecords;
 

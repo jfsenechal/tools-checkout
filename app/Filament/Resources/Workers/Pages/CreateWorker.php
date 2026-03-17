@@ -2,8 +2,7 @@
 
 namespace App\Filament\Resources\Workers\Pages;
 
-use App\Filament\Resources\WorkerResource;
-use App\Filament\Resources\Workers;
+use App\Filament\Resources\Workers\WorkerResource;
 use Filament\Resources\Pages\CreateRecord;
 
 class CreateWorker extends CreateRecord

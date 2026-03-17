@@ -2,9 +2,8 @@
 
 declare(strict_types=1);
 
-namespace App\Filament\Resources;
+namespace App\Filament\Resources\Workers;
 
-use App\Filament\Resources\Workers\Pages;
 use App\Filament\Resources\Workers\Schemas\WorkerForm;
 use App\Filament\Resources\Workers\Tables\WorkersTable;
 use App\Models\Worker;
@@ -20,7 +19,7 @@ final class WorkerResource extends Resource
 
     protected static string|null|BackedEnum $navigationIcon = 'heroicon-o-user-group';
 
-    protected static string|null|UnitEnum $navigationGroup = 'Personnes';
+    protected static string|null|UnitEnum $navigationGroup = 'Paramètres';
 
     protected static ?string $navigationLabel = 'Travailleurs';
 
@@ -28,7 +27,7 @@ final class WorkerResource extends Resource
 
     protected static ?string $pluralModelLabel = 'travailleurs';
 
-    protected static ?int $navigationSort = 1;
+    protected static ?int $navigationSort = 5;
 
     public static function form(Schema $schema): Schema
     {
