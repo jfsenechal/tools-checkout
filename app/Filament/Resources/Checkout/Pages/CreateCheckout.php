@@ -1,11 +1,13 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Filament\Resources\Checkout\Pages;
 
 use App\Filament\Resources\Checkout\CheckoutResource;
 use Filament\Resources\Pages\CreateRecord;
 
-class CreateCheckout extends CreateRecord
+final class CreateCheckout extends CreateRecord
 {
     protected static string $resource = CheckoutResource::class;
 

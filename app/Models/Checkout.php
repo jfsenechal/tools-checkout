@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -8,7 +10,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Traits\LogsActivity;
 
-class Checkout extends Model
+final class Checkout extends Model
 {
     use HasFactory, LogsActivity;
 
@@ -99,7 +101,7 @@ class Checkout extends Model
 
     public function getIsReturnedAttribute(): bool
     {
-        return !is_null($this->returned_at);
+        return ! is_null($this->returned_at);
     }
 
     public function getIsOverdueAttribute(): bool
@@ -108,7 +110,7 @@ class Checkout extends Model
             return false;
         }
 
-        if (!$this->expected_return_at) {
+        if (! $this->expected_return_at) {
             return false;
         }
 
@@ -117,7 +119,7 @@ class Checkout extends Model
 
     public function getDurationAttribute(): ?string
     {
-        if (!$this->returned_at) {
+        if (! $this->returned_at) {
             return null;
         }
 

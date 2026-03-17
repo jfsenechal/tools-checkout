@@ -1,12 +1,15 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Actions\Checkout;
 
 use App\DataTransferObjects\ReturnData;
 use App\Models\Checkout;
+use Exception;
 use Illuminate\Support\Facades\DB;
 
-class ReturnToolAction
+final class ReturnToolAction
 {
     /**
      * Execute the return action
@@ -19,7 +22,7 @@ class ReturnToolAction
                 ->findOrFail($data->checkoutId);
 
             if ($checkout->is_returned) {
-                throw new \Exception('This tool has already been returned.');
+                throw new Exception('This tool has already been returned.');
             }
 
             // Update checkout record

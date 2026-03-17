@@ -1,12 +1,14 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Filament\Resources\Checkout\Pages;
 
 use App\Filament\Resources\Checkout\CheckoutResource;
 use Filament\Actions;
 use Filament\Resources\Pages\ListRecords;
 
-class ListCheckouts extends ListRecords
+final class ListCheckouts extends ListRecords
 {
     protected static string $resource = CheckoutResource::class;
 

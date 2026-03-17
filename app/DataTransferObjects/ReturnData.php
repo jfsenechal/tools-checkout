@@ -1,10 +1,12 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\DataTransferObjects;
 
 use Carbon\Carbon;
 
-readonly class ReturnData
+final readonly class ReturnData
 {
     public function __construct(
         public int $checkoutId,
@@ -18,8 +20,8 @@ readonly class ReturnData
     {
         return new self(
             checkoutId: $data['checkout_id'],
-            returnedAt: isset($data['returned_at']) 
-                ? Carbon::parse($data['returned_at']) 
+            returnedAt: isset($data['returned_at'])
+                ? Carbon::parse($data['returned_at'])
                 : null,
             returnedBy: $data['returned_by'] ?? null,
             conditionIn: $data['condition_in'] ?? 'good',
