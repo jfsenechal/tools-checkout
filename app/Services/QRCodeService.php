@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Services;
 
 use App\Models\Tool;
+use App\Models\Worker;
 use Illuminate\Support\Facades\Storage;
 use SimpleSoftwareIO\QrCode\Facades\QrCode;
 
@@ -83,5 +84,62 @@ final class QRCodeService
         }
 
         return false;
+    }
+
+    /**
+     * Generate QR code for a worker
+     */
+    public function generateForWorker(Worker $worker): string
+    {
+        $qrCodeData = json_encode([
+            'type' => 'worker',
+            'id' => $worker->id,
+        ]);
+
+        $filename = 'worker-'.$worker->id.'-'.time().'.svg';
+
+        $qrCode = QrCode::format('svg')
+            ->size(300)
+            ->margin(2)
+            ->errorCorrection('H')
+            ->generate($qrCodeData);
+
+        Storage::disk('public')->put('qrcodes/'.$filename, $qrCode);
+
+        return $filename;
+    }
+
+    /**
+     * Generate QR codes for multiple workers
+     */
+    public function generateBatchWorkers(array $workerIds): array
+    {
+        $generated = [];
+
+        foreach ($workerIds as $workerId) {
+            $worker = Worker::find($workerId);
+            if ($worker) {
+                $filename = $this->generateForWorker($worker);
+                $worker->update(['qr_code' => $filename]);
+                $generated[$workerId] = $filename;
+            }
+        }
+
+        return $generated;
+    }
+
+    /**
+     * Regenerate QR code for a worker
+     */
+    public function regenerateForWorker(Worker $worker): string
+    {
+        if ($worker->qr_code) {
+            Storage::disk('public')->delete('qrcodes/'.$worker->qr_code);
+        }
+
+        $filename = $this->generateForWorker($worker);
+        $worker->update(['qr_code' => $filename]);
+
+        return $filename;
     }
 }

@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace App\Filament\Resources\Workers\Tables;
 
+use App\Filament\Resources\Workers\Actions\GenerateQrAction;
+use App\Filament\Resources\Workers\Actions\GenerateQrCodesBulkAction;
+use App\Filament\Resources\Workers\Actions\ViewQrAction;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
@@ -55,6 +58,11 @@ final class WorkersTable
                     ->searchable()
                     ->toggleable(isToggledHiddenByDefault: true),
 
+                Tables\Columns\IconColumn::make('qr_code')
+                    ->label('QR')
+                    ->boolean()
+                    ->sortable(),
+
                 Tables\Columns\TextColumn::make('created_at')
                     ->label('Créé le')
                     ->dateTime()
@@ -72,6 +80,8 @@ final class WorkersTable
                     ->multiple(),
             ])
             ->actions([
+                GenerateQrAction::make(),
+                ViewQrAction::make(),
                 EditAction::make()
                     ->icon(Heroicon::PencilSquare),
                 DeleteAction::make()
@@ -79,6 +89,7 @@ final class WorkersTable
             ])
             ->bulkActions([
                 BulkActionGroup::make([
+                    GenerateQrCodesBulkAction::make(),
                     DeleteBulkAction::make(),
                 ]),
             ])

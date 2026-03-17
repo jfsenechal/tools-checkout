@@ -18,6 +18,7 @@ final class Worker extends Model
     protected $fillable = [
         'first_name',
         'last_name',
+        'qr_code',
         'email',
         'phone',
         'status',
@@ -51,6 +52,13 @@ final class Worker extends Model
     }
 
     // Accessors
+    public function getQrCodeUrlAttribute(): string
+    {
+        return $this->qr_code
+            ? asset('storage/qrcodes/'.$this->qr_code)
+            : '';
+    }
+
     public function getIsActiveAttribute(): bool
     {
         return $this->status === 'active';
