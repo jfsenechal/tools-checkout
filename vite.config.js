@@ -13,7 +13,7 @@ export default defineConfig({
     server: {
         host: '0.0.0.0',
         hmr: {
-            host: 'tools.local',
+            host: 'gstock.local',
             protocol: 'wss',
         },
         cors: {
