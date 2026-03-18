@@ -1,6 +1,6 @@
 <!-- Scanner Section (Tool-First) -->
 <div x-show="mode === 'tool-first' && !scannedTool" class="bg-white rounded-lg shadow-lg p-6 mb-6">
-    <h2 class="text-xl font-semibold mb-4 text-gray-800">Scan Tool QR Code</h2>
+    <h2 class="text-xl font-semibold mb-4 text-gray-800">Scan Outil QR Code</h2>
 
     <!-- Camera View -->
     <div x-show="cameraActive" class="relative mb-4 cursor-pointer" @click="confirmScan()">
