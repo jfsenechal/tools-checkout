@@ -13,6 +13,8 @@ use Illuminate\Database\Eloquent\Builder;
 
 final class CheckedOutToolsWidget extends TableWidget
 {
+    protected static ?int $sort = 2;
+
     protected static ?string $heading = 'Outils empruntés';
 
     protected int|string|array $columnSpan = 'full';

@@ -6,6 +6,7 @@ namespace App\Providers\Filament;
 
 use App\Filament\Pages\Auth\Login;
 use App\Filament\Widgets\CheckedOutToolsWidget;
+use App\Filament\Widgets\ScannerLinkWidget;
 use Filament\Auth\MultiFactor\App\AppAuthentication;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
@@ -56,8 +57,9 @@ final class AdminPanelProvider extends PanelProvider
             ->pages([
                 Dashboard::class,
             ])
+            ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\Filament\Widgets')
             ->widgets([
-                CheckedOutToolsWidget::class,
+
             ])
             ->navigationItems([
                 NavigationItem::make('Scanner')
