@@ -428,7 +428,7 @@
                     this.initCameraElements();
                     try {
                         const stream = await navigator.mediaDevices.getUserMedia({
-                            video: { facingMode: 'left' }
+                            video: { facingMode: 'environment' }
                         });
                         this.video.srcObject = stream;
                         await this.video.play();
