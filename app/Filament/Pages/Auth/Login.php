@@ -31,12 +31,12 @@ final class Login extends BasePage
 
     public function getHeading(): string|Htmlable|null
     {
-        return 'Gestion du bottin marchois';
+        return 'Gestion des entrées et sorties';
     }
 
     public function getSubheading(): string|Htmlable|null
     {
-        return 'Bon travail 🦆';
+        return 'Bon travail 🐰';
     }
 
     public function authenticate(): ?LoginResponse
