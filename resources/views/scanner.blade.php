@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="fr">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="theme-color" content="#3B82F6">
-    <title>Tool Checkout Scanner</title>
+    <title>Scanner de prêt d'outils</title>
 
     <!-- PWA Manifest -->
     <link rel="manifest" href="/scanner-manifest.json">

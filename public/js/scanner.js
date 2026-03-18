@@ -74,7 +74,7 @@ function scannerApp() {
                 this.scanning = true;
                 this.startScanning();
             } catch (error) {
-                this.showMessage('Camera access denied or not available', 'error');
+                this.showMessage('Accès à la caméra refusé ou indisponible', 'error');
             }
         },
 
@@ -172,7 +172,7 @@ function scannerApp() {
                     setTimeout(() => this.startCamera(), 2000);
                 }
             } catch (error) {
-                this.showMessage('Error scanning QR code', 'error');
+                this.showMessage('Erreur lors du scan du code QR', 'error');
                 setTimeout(() => this.startCamera(), 2000);
             }
         },
@@ -193,13 +193,13 @@ function scannerApp() {
                 if (result.success) {
                     this.selectedWorker = result.data.worker;
                     this.workerCheckouts = result.data.checkouts;
-                    this.showMessage(`Worker: ${result.data.worker.first_name} ${result.data.worker.last_name}`, 'success');
+                    this.showMessage(`Ouvrier : ${result.data.worker.first_name} ${result.data.worker.last_name}`, 'success');
                 } else {
                     this.showMessage(result.message, 'error');
                     setTimeout(() => this.startCamera(), 2000);
                 }
             } catch (error) {
-                this.showMessage('Error scanning worker QR code', 'error');
+                this.showMessage('Erreur lors du scan du code QR de l\'ouvrier', 'error');
                 setTimeout(() => this.startCamera(), 2000);
             }
         },
@@ -224,7 +224,7 @@ function scannerApp() {
                     setTimeout(() => this.startCamera(), 2000);
                 }
             } catch (error) {
-                this.showMessage('Error scanning tool QR code', 'error');
+                this.showMessage('Erreur lors du scan du code QR de l\'outil', 'error');
                 setTimeout(() => this.startCamera(), 2000);
             }
         },
@@ -276,19 +276,19 @@ function scannerApp() {
                 const result = await response.json();
 
                 if (result.success) {
-                    this.showMessage('Tool checked out successfully!', 'success');
+                    this.showMessage('Outil prêté avec succès !', 'success');
                     this.showWorkerSelection = false;
                     setTimeout(() => this.reset(), 2000);
                 } else {
                     this.showMessage(result.message, 'error');
                 }
             } catch (error) {
-                this.showMessage('Error checking out tool', 'error');
+                this.showMessage('Erreur lors du prêt de l\'outil', 'error');
             }
         },
 
         async returnTool() {
-            if (!confirm('Return this tool?')) return;
+            if (!confirm('Retourner cet outil ?')) return;
 
             try {
                 const response = await fetch('/api/scanner/return', {
@@ -305,19 +305,19 @@ function scannerApp() {
                 const result = await response.json();
 
                 if (result.success) {
-                    this.showMessage('Tool returned successfully!', 'success');
+                    this.showMessage('Outil retourné avec succès !', 'success');
                     setTimeout(() => this.reset(), 2000);
                 } else {
                     this.showMessage(result.message, 'error');
                 }
             } catch (error) {
-                this.showMessage('Error returning tool', 'error');
+                this.showMessage('Erreur lors du retour de l\'outil', 'error');
             }
         },
 
         async checkoutToolForWorker(tool) {
             if (!tool.is_available) {
-                this.showMessage('Tool is not available for checkout', 'error');
+                this.showMessage('L\'outil n\'est pas disponible pour le prêt', 'error');
                 setTimeout(() => this.startCamera(), 2000);
                 return;
             }
@@ -338,7 +338,7 @@ function scannerApp() {
                 const result = await response.json();
 
                 if (result.success) {
-                    this.showMessage('Tool checked out successfully!', 'success');
+                    this.showMessage('Outil prêté avec succès !', 'success');
                     await this.reloadWorkerCheckouts();
                     setTimeout(() => this.startCamera(), 2000);
                 } else {
@@ -346,7 +346,7 @@ function scannerApp() {
                     setTimeout(() => this.startCamera(), 2000);
                 }
             } catch (error) {
-                this.showMessage('Error checking out tool', 'error');
+                this.showMessage('Erreur lors du prêt de l\'outil', 'error');
                 setTimeout(() => this.startCamera(), 2000);
             }
         },
@@ -364,7 +364,7 @@ function scannerApp() {
         },
 
         async returnToolFromWorker(checkout) {
-            if (!confirm('Return this tool?')) return;
+            if (!confirm('Retourner cet outil ?')) return;
 
             try {
                 const response = await fetch('/api/scanner/return', {
@@ -381,13 +381,13 @@ function scannerApp() {
                 const result = await response.json();
 
                 if (result.success) {
-                    this.showMessage('Tool returned successfully!', 'success');
+                    this.showMessage('Outil retourné avec succès !', 'success');
                     await this.reloadWorkerCheckouts();
                 } else {
                     this.showMessage(result.message, 'error');
                 }
             } catch (error) {
-                this.showMessage('Error returning tool', 'error');
+                this.showMessage('Erreur lors du retour de l\'outil', 'error');
             }
         },
 

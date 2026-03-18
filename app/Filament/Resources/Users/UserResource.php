@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Filament\Resources\Users;
 
 use App\Filament\Resources\Users\Pages\CreateUser;
-use App\Filament\Resources\Users\Pages\EditUser;
 use App\Filament\Resources\Users\Pages\ListUsers;
 use App\Filament\Resources\Users\Schemas\UserForm;
 use App\Filament\Resources\Users\Tables\UsersTable;
@@ -23,16 +22,28 @@ final class UserResource extends Resource
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedUserGroup;
 
-    protected static string|null|UnitEnum $navigationGroup = 'Paramètres';
+    protected static string|UnitEnum|null $navigationGroup = 'Settings';
 
-    protected static ?int $navigationSort = 6;
+    protected static ?int $navigationSort = 13;
 
     protected static ?string $recordTitleAttribute = 'name';
+
+    public static function getNavigationLabel(): string
+    {
+        return 'Utilisateurs';
+    }
+
+    public static function getLabel(): ?string
+    {
+        return 'Utilisateurs';
+    }
 
     public static function getGloballySearchableAttributes(): array
     {
         return [
             'name',
+            'first_name',
+            'last_name',
             'email',
         ];
     }
@@ -59,7 +70,6 @@ final class UserResource extends Resource
         return [
             'index' => ListUsers::route('/'),
             'create' => CreateUser::route('/create'),
-            'edit' => EditUser::route('/{record}/edit'),
         ];
     }
 }
