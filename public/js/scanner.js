@@ -16,6 +16,8 @@ function scannerApp() {
         canvas: null,
         canvasContext: null,
         scanInterval: null,
+        detectedQRData: null,
+        qrDetected: false,
 
         init() {
             this.initCameraElements();
@@ -82,6 +84,8 @@ function scannerApp() {
             }
             this.cameraActive = false;
             this.scanning = false;
+            this.detectedQRData = null;
+            this.qrDetected = false;
             if (this.scanInterval) {
                 clearInterval(this.scanInterval);
             }
@@ -115,8 +119,20 @@ function scannerApp() {
             const code = jsQR(imageData.data, imageData.width, imageData.height);
 
             if (code) {
-                this.handleQRCode(code.data);
+                this.detectedQRData = code.data;
+                this.qrDetected = true;
+            } else {
+                this.detectedQRData = null;
+                this.qrDetected = false;
             }
+        },
+
+        confirmScan() {
+            if (!this.detectedQRData) return;
+            const qrData = this.detectedQRData;
+            this.detectedQRData = null;
+            this.qrDetected = false;
+            this.handleQRCode(qrData);
         },
 
         async handleQRCode(qrData) {

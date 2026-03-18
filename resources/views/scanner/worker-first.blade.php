@@ -3,10 +3,18 @@
     <h2 class="text-xl font-semibold mb-4 text-gray-800">Scan Worker QR Code</h2>
 
     <!-- Camera View -->
-    <div x-show="cameraActive" class="relative mb-4">
+    <div x-show="cameraActive" class="relative mb-4 cursor-pointer" @click="confirmScan()">
         <video id="video-worker" class="w-full rounded-lg bg-black" style="transform: scaleX(-1)" playsinline></video>
         <canvas id="canvas-worker" class="hidden"></canvas>
-        <div class="absolute inset-0 border-4 border-green-500 border-dashed rounded-lg pointer-events-none"></div>
+        <div
+            class="absolute inset-0 border-4 border-dashed rounded-lg pointer-events-none transition-colors"
+            :class="qrDetected ? 'border-green-500' : 'border-green-300'">
+        </div>
+        <div
+            x-show="qrDetected" x-cloak
+            class="absolute bottom-4 left-1/2 -translate-x-1/2 bg-green-600 text-white px-6 py-3 rounded-full font-semibold shadow-lg pointer-events-none animate-pulse">
+            Tap to confirm
+        </div>
     </div>
 
     <div class="flex gap-2">
@@ -29,8 +37,11 @@
         </button>
     </div>
 
-    <div x-show="scanning && cameraActive" class="mt-4 p-4 bg-green-50 border border-green-200 rounded-lg">
+    <div x-show="scanning && cameraActive && !qrDetected" class="mt-4 p-4 bg-green-50 border border-green-200 rounded-lg">
         <p class="text-green-800 text-center">Scanning for worker QR code...</p>
+    </div>
+    <div x-show="scanning && cameraActive && qrDetected" x-cloak class="mt-4 p-4 bg-green-50 border border-green-200 rounded-lg">
+        <p class="text-green-800 text-center font-semibold">QR code detected — tap the camera to confirm</p>
     </div>
 </div>
 
@@ -81,10 +92,18 @@
         <h3 class="text-lg font-semibold text-gray-800 mb-4">Scan Tool to Checkout</h3>
 
         <!-- Camera View -->
-        <div x-show="cameraActive" class="relative mb-4">
+        <div x-show="cameraActive" class="relative mb-4 cursor-pointer" @click="confirmScan()">
             <video id="video-tool-wf" class="w-full rounded-lg bg-black" style="transform: scaleX(-1)" playsinline></video>
             <canvas id="canvas-tool-wf" class="hidden"></canvas>
-            <div class="absolute inset-0 border-4 border-blue-500 border-dashed rounded-lg pointer-events-none"></div>
+            <div
+                class="absolute inset-0 border-4 border-dashed rounded-lg pointer-events-none transition-colors"
+                :class="qrDetected ? 'border-green-500' : 'border-blue-500'">
+            </div>
+            <div
+                x-show="qrDetected" x-cloak
+                class="absolute bottom-4 left-1/2 -translate-x-1/2 bg-green-600 text-white px-6 py-3 rounded-full font-semibold shadow-lg pointer-events-none animate-pulse">
+                Tap to confirm
+            </div>
         </div>
 
         <div class="flex gap-2">
@@ -107,8 +126,11 @@
             </button>
         </div>
 
-        <div x-show="scanning && cameraActive" class="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+        <div x-show="scanning && cameraActive && !qrDetected" class="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
             <p class="text-blue-800 text-center">Scanning for tool QR code...</p>
+        </div>
+        <div x-show="scanning && cameraActive && qrDetected" x-cloak class="mt-4 p-4 bg-green-50 border border-green-200 rounded-lg">
+            <p class="text-green-800 text-center font-semibold">QR code detected — tap the camera to confirm</p>
         </div>
     </div>
 </div>

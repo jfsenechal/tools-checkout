@@ -3,10 +3,18 @@
     <h2 class="text-xl font-semibold mb-4 text-gray-800">Scan Tool QR Code</h2>
 
     <!-- Camera View -->
-    <div x-show="cameraActive" class="relative mb-4">
+    <div x-show="cameraActive" class="relative mb-4 cursor-pointer" @click="confirmScan()">
         <video id="video" class="w-full rounded-lg bg-black" playsinline></video>
         <canvas id="canvas" class="hidden"></canvas>
-        <div class="absolute inset-0 border-4 border-blue-500 border-dashed rounded-lg pointer-events-none"></div>
+        <div
+            class="absolute inset-0 border-4 border-dashed rounded-lg pointer-events-none transition-colors"
+            :class="qrDetected ? 'border-green-500' : 'border-blue-500'">
+        </div>
+        <div
+            x-show="qrDetected" x-cloak
+            class="absolute bottom-4 left-1/2 -translate-x-1/2 bg-green-600 text-white px-6 py-3 rounded-full font-semibold shadow-lg pointer-events-none animate-pulse">
+            Tap to confirm
+        </div>
     </div>
 
     <!-- Camera Controls -->
@@ -31,8 +39,11 @@
     </div>
 
     <!-- Status Messages -->
-    <div x-show="scanning && cameraActive" class="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+    <div x-show="scanning && cameraActive && !qrDetected" class="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
         <p class="text-blue-800 text-center">Scanning for QR code...</p>
+    </div>
+    <div x-show="scanning && cameraActive && qrDetected" x-cloak class="mt-4 p-4 bg-green-50 border border-green-200 rounded-lg">
+        <p class="text-green-800 text-center font-semibold">QR code detected — tap the camera to confirm</p>
     </div>
 </div>
 
