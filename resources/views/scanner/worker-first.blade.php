@@ -4,7 +4,7 @@
 
     <!-- Camera View -->
     <div x-show="cameraActive" class="relative mb-4 cursor-pointer" @click="confirmScan()">
-        <video id="video-worker" class="w-full rounded-lg bg-black" style="transform: scaleX(-1)" playsinline></video>
+        <video id="video-worker" class="w-full rounded-lg bg-black" playsinline></video>
         <canvas id="canvas-worker" class="hidden"></canvas>
         <div
             class="absolute inset-0 border-4 border-dashed rounded-lg pointer-events-none transition-colors"
