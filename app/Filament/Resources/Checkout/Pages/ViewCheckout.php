@@ -14,7 +14,7 @@ final class ViewCheckout extends ViewRecord
 
     public function getTitle(): string
     {
-        return $this->record->company ?? 'Empty name';
+        return 'Détails de l\'emprunt';
     }
 
     protected function getHeaderActions(): array
