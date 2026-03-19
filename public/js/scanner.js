@@ -82,6 +82,7 @@ function scannerApp() {
                 });
                 this.video.srcObject = stream;
                 await this.video.play();
+                this.video.scrollIntoView({ behavior: 'smooth', block: 'center' });
                 this.startScanning();
             } catch (error) {
                 this.cameraActive = false;
