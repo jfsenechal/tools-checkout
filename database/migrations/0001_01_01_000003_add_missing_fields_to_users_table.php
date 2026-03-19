@@ -14,7 +14,7 @@ return new class extends Migration
             $table->string('username')->unique()->nullable()->after('id');
             $table->string('first_name')->nullable()->after('username');
             $table->string('last_name')->nullable()->after('first_name');
-            $table->removeColumn('name');
+            $table->dropColumn('name');
         });
     }
 
