@@ -19,7 +19,7 @@ final class ReturnToolAction
             ->label('Retourner l\'outil')
             ->icon(Heroicon::ArrowUturnLeft)
             ->color('success')
-            ->form([
+            ->schema([
                 DateTimePicker::make('returned_at')
                     ->label('Date de retour')
                     ->default(now())
