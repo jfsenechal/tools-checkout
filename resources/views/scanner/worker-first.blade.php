@@ -61,32 +61,6 @@
         <p class="text-sm text-gray-500" x-text="selectedWorker?.email"></p>
     </div>
 
-    <!-- Worker's Active Checkouts -->
-    <div x-show="workerCheckouts.length > 0" class="bg-white rounded-lg shadow-lg p-6">
-        <h3 class="text-lg font-semibold text-gray-800 mb-4">Outils en prêt</h3>
-        <div class="space-y-3">
-            <template x-for="checkout in workerCheckouts" :key="checkout.id">
-                <div class="flex items-center justify-between p-4 border border-gray-200 rounded-lg">
-                    <div>
-                        <p class="font-semibold" x-text="checkout.tool.name"></p>
-                        <p class="text-sm text-gray-500" x-text="checkout.tool.category || 'N/A'"></p>
-                        <p class="text-xs text-gray-400">Depuis : <span x-text="formatDate(checkout.checked_out_at)"></span></p>
-                        <span
-                            x-show="checkout.is_overdue"
-                            class="inline-block mt-1 px-2 py-0.5 bg-red-100 text-red-800 text-xs font-bold rounded">
-                            EN RETARD
-                        </span>
-                    </div>
-                    <button
-                        @click="returnToolFromWorker(checkout)"
-                        class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-blue-700 transition">
-                        Retourner
-                    </button>
-                </div>
-            </template>
-        </div>
-    </div>
-
     <!-- Scan Tool for Checkout -->
     <div class="bg-white rounded-lg shadow-lg p-6">
         <h3 class="text-lg font-semibold text-gray-800 mb-4">Scanner un outil pour le prêt</h3>

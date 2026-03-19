@@ -7,7 +7,6 @@ function scannerApp() {
         currentCheckout: null,
         showWorkerSelection: false,
         selectedWorker: null,
-        workerCheckouts: [],
         workers: [],
         workerSearch: '',
         loadingWorkers: false,
@@ -57,7 +56,6 @@ function scannerApp() {
             this.currentCheckout = null;
             this.showWorkerSelection = false;
             this.selectedWorker = null;
-            this.workerCheckouts = [];
             this.workerSearch = '';
             this.loadWorkers();
         },
@@ -192,7 +190,6 @@ function scannerApp() {
 
                 if (result.success) {
                     this.selectedWorker = result.data.worker;
-                    this.workerCheckouts = result.data.checkouts;
                     this.showMessage(`Ouvrier : ${result.data.worker.first_name} ${result.data.worker.last_name}`, 'success');
                 } else {
                     this.showMessage(result.message, 'error');
@@ -339,7 +336,6 @@ function scannerApp() {
 
                 if (result.success) {
                     this.showMessage('Outil prêté avec succès !', 'success');
-                    await this.reloadWorkerCheckouts();
                     setTimeout(() => this.startCamera(), 2000);
                 } else {
                     this.showMessage(result.message, 'error');
@@ -351,50 +347,9 @@ function scannerApp() {
             }
         },
 
-        async reloadWorkerCheckouts() {
-            try {
-                const response = await fetch(`/api/scanner/workers/${this.selectedWorker.id}/tools`);
-                const result = await response.json();
-                if (result.success) {
-                    this.workerCheckouts = result.data.checkouts;
-                }
-            } catch (error) {
-                console.error('Error reloading worker checkouts:', error);
-            }
-        },
-
-        async returnToolFromWorker(checkout) {
-            if (!confirm('Retourner cet outil ?')) return;
-
-            try {
-                const response = await fetch('/api/scanner/return', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Accept': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        checkout_id: checkout.id
-                    })
-                });
-
-                const result = await response.json();
-
-                if (result.success) {
-                    this.showMessage('Outil retourné avec succès !', 'success');
-                    await this.reloadWorkerCheckouts();
-                } else {
-                    this.showMessage(result.message, 'error');
-                }
-            } catch (error) {
-                this.showMessage('Erreur lors du retour de l\'outil', 'error');
-            }
-        },
-
         resetWorkerFirst() {
             this.stopCamera();
             this.selectedWorker = null;
-            this.workerCheckouts = [];
             this.workerSearch = '';
         },
 
