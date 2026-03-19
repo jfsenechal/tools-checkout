@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Filament\Widgets;
 
+use App\Filament\Resources\Checkout\CheckoutResource;
 use App\Models\Checkout;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables;
@@ -32,7 +33,8 @@ final class CheckedOutToolsWidget extends TableWidget
                 Tables\Columns\TextColumn::make('tool.name')
                     ->label('Outil')
                     ->searchable()
-                    ->sortable(),
+                    ->sortable()
+                    ->url(fn (Checkout $record) => CheckoutResource::getUrl('view', ['record' => $record->id])),
 
                 Tables\Columns\TextColumn::make('worker.last_name')
                     ->label('Travailleur')
