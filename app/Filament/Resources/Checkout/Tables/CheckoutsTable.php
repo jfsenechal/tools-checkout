@@ -5,11 +5,11 @@ declare(strict_types=1);
 namespace App\Filament\Resources\Checkout\Tables;
 
 use App\Filament\Resources\Checkout\Actions\ReturnToolAction;
+use App\Filament\Resources\Checkout\CheckoutResource;
 use App\Models\Checkout;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
-use Filament\Actions\ViewAction;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables;
 use Filament\Tables\Table;
@@ -24,14 +24,15 @@ final class CheckoutsTable
                 Tables\Columns\TextColumn::make('tool.name')
                     ->label('Outil')
                     ->searchable()
+                    ->url(fn (Checkout $record) => CheckoutResource::getUrl('view', ['record' => $record->id]))
                     ->sortable()
-                    ->description(fn(Checkout $record): string => $record->tool->category ?? ''),
+                    ->description(fn (Checkout $record): string => $record->tool->category ?? ''),
 
                 Tables\Columns\TextColumn::make('worker.last_name')
                     ->label('Travailleur')
                     ->searchable()
                     ->sortable()
-                    ->description(fn(Checkout $record): string => $record->worker->first_name),
+                    ->description(fn (Checkout $record): string => $record->worker->first_name),
 
                 Tables\Columns\TextColumn::make('checked_out_at')
                     ->label('Date d\'emprunt')
@@ -43,14 +44,6 @@ final class CheckoutsTable
                     ->dateTime()
                     ->sortable()
                     ->toggleable(),
-
-                Tables\Columns\TextColumn::make('returned_at')
-                    ->label('Retourné')
-                    ->dateTime()
-                    ->sortable()
-                    ->placeholder('Non retourné')
-                    ->badge()
-                    ->color(fn($state): string => $state ? 'success' : 'warning'),
 
                 Tables\Columns\IconColumn::make('is_overdue')
                     ->label('En retard')
@@ -73,12 +66,12 @@ final class CheckoutsTable
             ->filters([
                 Tables\Filters\Filter::make('active')
                     ->label('Emprunts actifs')
-                    ->query(fn(Builder $query): Builder => $query->whereNull('returned_at'))
+                    ->query(fn (Builder $query): Builder => $query->whereNull('returned_at'))
                     ->default(),
 
                 Tables\Filters\Filter::make('overdue')
                     ->label('En retard')
-                    ->query(fn(Builder $query): Builder => $query->whereNull('returned_at')
+                    ->query(fn (Builder $query): Builder => $query->whereNull('returned_at')
                         ->where('expected_return_at', '<', now())
                     ),
 
@@ -94,9 +87,8 @@ final class CheckoutsTable
                     ->searchable()
                     ->preload(),
             ])
-            ->recordAction(ViewAction::class)
             ->recordActions([
-                ViewAction::make(),
+
                 EditAction::make()
                     ->icon(Heroicon::PencilSquare),
                 ReturnToolAction::make(),
