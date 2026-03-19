@@ -40,7 +40,6 @@ final class DatabaseSeeder extends Seeder
         $this->command->info('Database seeded successfully!');
 
         User::factory()->create([
-            'name' => config('app.default_user.name'),
             'username' => config('app.default_user.name'),
             'email' => config('app.default_user.email'),
             'password' => bcrypt(config('app.default_user.password')),
