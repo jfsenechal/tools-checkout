@@ -69,7 +69,7 @@ final class ToolsTable
                     ])
                     ->multiple(),
             ])
-            ->actions([
+            ->recordActions([
                 GenerateQrAction::make(),
                 ViewQrAction::make(),
                 EditAction::make()
@@ -77,7 +77,7 @@ final class ToolsTable
                 DeleteAction::make()
                     ->icon(Heroicon::Trash),
             ])
-            ->bulkActions([
+            ->toolbarActions([
                 BulkActionGroup::make([
                     GenerateQrCodesBulkAction::make(),
                     DeleteBulkAction::make(),

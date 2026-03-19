@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Filament\Resources\Checkout;
 
 use App\Filament\Resources\Checkout\Schemas\CheckoutForm;
+use App\Filament\Resources\Checkout\Schemas\CheckoutInfolist;
 use App\Filament\Resources\Checkout\Tables\CheckoutsTable;
 use App\Models\Checkout;
 use BackedEnum;
@@ -34,6 +35,11 @@ final class CheckoutResource extends Resource
         return CheckoutForm::configure($schema);
     }
 
+    public static function infolist(Schema $schema): Schema
+    {
+        return CheckoutInfolist::configure($schema);
+    }
+
     public static function table(Table $table): Table
     {
         return CheckoutsTable::configure($table);
@@ -44,6 +50,7 @@ final class CheckoutResource extends Resource
         return [
             'index' => Pages\ListCheckouts::route('/'),
             'create' => Pages\CreateCheckout::route('/create'),
+            'view' => Pages\ViewCheckout::route('/{record}'),
             'edit' => Pages\EditCheckout::route('/{record}/edit'),
         ];
     }
