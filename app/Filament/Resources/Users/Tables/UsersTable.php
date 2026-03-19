@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Filament\Resources\Users\Tables;
 
 use Filament\Actions\BulkActionGroup;
-use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\ViewAction;
 use Filament\Tables\Columns\TextColumn;
@@ -44,9 +43,7 @@ final class UsersTable
             ])
             ->defaultPaginationPageOption(50)
             ->recordAction(ViewAction::class)
-            ->recordActions([
-                DeleteAction::make(),
-            ])
+            ->recordUrl(null)
             ->toolbarActions([
                 BulkActionGroup::make([
                     DeleteBulkAction::make(),

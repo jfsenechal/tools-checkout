@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Filament\Resources\Users\Schemas;
 
 use App\Repository\UserRepository;
-use Filament\Forms\Components\CheckboxList;
 use Filament\Forms\Components\Select;
 use Filament\Schemas\Schema;
 
@@ -33,9 +32,6 @@ final class UserForm
                     ->label('Nom')
                     ->options(UserRepository::listUsersFromLdapForSelect())
                     ->searchable(),
-                CheckboxList::make('roles')
-                    ->label('Rôles')
-                    ->relationship('roles', 'label'),
             ]);
     }
 }

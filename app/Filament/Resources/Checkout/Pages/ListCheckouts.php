@@ -7,6 +7,7 @@ namespace App\Filament\Resources\Checkout\Pages;
 use App\Filament\Resources\Checkout\CheckoutResource;
 use Filament\Actions;
 use Filament\Resources\Pages\ListRecords;
+use Filament\Support\Icons\Heroicon;
 
 final class ListCheckouts extends ListRecords
 {
@@ -15,7 +16,9 @@ final class ListCheckouts extends ListRecords
     protected function getHeaderActions(): array
     {
         return [
-            Actions\CreateAction::make(),
+            Actions\CreateAction::make()
+                ->label('Nouvelle emprunt')
+                ->icon(Heroicon::PlusCircle),
         ];
     }
 }

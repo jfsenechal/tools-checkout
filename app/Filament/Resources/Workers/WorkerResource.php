@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Filament\Resources\Workers;
 
 use App\Filament\Resources\Workers\Schemas\WorkerForm;
+use App\Filament\Resources\Workers\Schemas\WorkerInfolist;
 use App\Filament\Resources\Workers\Tables\WorkersTable;
 use App\Models\Worker;
 use BackedEnum;
@@ -34,6 +35,11 @@ final class WorkerResource extends Resource
         return WorkerForm::configure($schema);
     }
 
+    public static function infolist(Schema $schema): Schema
+    {
+        return WorkerInfolist::configure($schema);
+    }
+
     public static function table(Table $table): Table
     {
         return WorkersTable::configure($table);
@@ -44,6 +50,7 @@ final class WorkerResource extends Resource
         return [
             'index' => Pages\ListWorkers::route('/'),
             'create' => Pages\CreateWorker::route('/create'),
+            'view' => Pages\ViewWorker::route('/{record}'),
             'edit' => Pages\EditWorker::route('/{record}/edit'),
         ];
     }

@@ -12,6 +12,7 @@ use Filament\Actions\Action;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\ListRecords;
 use Filament\Schemas\Schema;
+use Filament\Support\Icons\Heroicon;
 
 final class ListUsers extends ListRecords
 {
@@ -27,7 +28,7 @@ final class ListUsers extends ListRecords
         return [
             Action::make('ImportUser')
                 ->label('Ajouter un utilisateur')
-                ->icon('tabler-user-plus')
+                ->icon(Heroicon::UserPlus)
                 ->modal()
                 ->modalHeading('Importer un utilisateur de la LDAP')
                 ->schema(fn (Schema $schema) => UserForm::add($schema))

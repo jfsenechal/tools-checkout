@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
+use App\Ldap\UserLdap;
 use Database\Factories\UserFactory;
 use Filament\Auth\MultiFactor\App\Contracts\HasAppAuthentication;
 use Filament\Auth\MultiFactor\App\Contracts\HasAppAuthenticationRecovery;
@@ -14,11 +15,20 @@ use Illuminate\Database\Eloquent\Attributes\UseFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use LdapRecord\Models\Model;
 
 #[UseFactory(UserFactory::class)]
 final class User extends Authenticatable implements FilamentUser, HasAppAuthentication, HasAppAuthenticationRecovery
 {
     use HasFactory, Notifiable;
+
+    protected $fillable = [
+        'email',
+        'password',
+        'username',
+        'first_name',
+        'last_name',
+    ];
 
     /**
      * The attributes that should be hidden for serialization.
@@ -31,6 +41,17 @@ final class User extends Authenticatable implements FilamentUser, HasAppAuthenti
         'app_authentication_secret',
         'app_authentication_recovery_codes',
     ];
+
+    public static function generateDataFromLdap(UserLdap|Model $userLdap): array
+    {
+        $email = $userLdap->getFirstAttribute('mail');
+
+        return [
+            'first_name' => $userLdap->getFirstAttribute('givenname'),
+            'last_name' => $userLdap->getFirstAttribute('sn'),
+            'email' => $email,
+        ];
+    }
 
     public function canAccessPanel(Panel $panel): bool
     {

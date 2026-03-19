@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Filament\Resources\Tools;
 
 use App\Filament\Resources\Tools\Schemas\ToolForm;
+use App\Filament\Resources\Tools\Schemas\ToolInfolist;
 use App\Filament\Resources\Tools\Tables\ToolsTable;
 use App\Models\Tool;
 use BackedEnum;
@@ -34,6 +35,11 @@ final class ToolResource extends Resource
         return ToolForm::configure($schema);
     }
 
+    public static function infolist(Schema $schema): Schema
+    {
+        return ToolInfolist::configure($schema);
+    }
+
     public static function table(Table $table): Table
     {
         return ToolsTable::configure($table);
@@ -44,6 +50,7 @@ final class ToolResource extends Resource
         return [
             'index' => Pages\ListTools::route('/'),
             'create' => Pages\CreateTool::route('/create'),
+            'view' => Pages\ViewTool::route('/{record}'),
             'edit' => Pages\EditTool::route('/{record}/edit'),
         ];
     }

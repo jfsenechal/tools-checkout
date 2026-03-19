@@ -5,19 +5,17 @@ declare(strict_types=1);
 namespace App\Filament\Resources\Tools\Pages;
 
 use App\Filament\Resources\Tools\ToolResource;
-use Filament\Actions;
-use Filament\Resources\Pages\EditRecord;
-use Filament\Support\Icons\Heroicon;
+use Filament\Actions\EditAction;
+use Filament\Resources\Pages\ViewRecord;
 
-final class EditTool extends EditRecord
+final class ViewTool extends ViewRecord
 {
     protected static string $resource = ToolResource::class;
 
     protected function getHeaderActions(): array
     {
         return [
-            Actions\DeleteAction::make()
-                ->icon(Heroicon::Trash),
+            EditAction::make(),
         ];
     }
 }

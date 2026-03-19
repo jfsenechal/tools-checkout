@@ -6,7 +6,7 @@ return [
 
     /*
     |--------------------------------------------------------------------------
-    | Default User Configuration
+    | Default UserLdap Configuration
     |--------------------------------------------------------------------------
     |
     | This configuration defines the default user credentials that will be

@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Auth;
 
-use App\Ldap\User as UserLdap;
+use App\Ldap\UserLdap;
 use App\Models\User;
 use LdapRecord\Container;
 
