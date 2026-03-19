@@ -10,4 +10,9 @@ use Filament\Resources\Pages\CreateRecord;
 final class CreateWorker extends CreateRecord
 {
     protected static string $resource = WorkerResource::class;
+
+    public function getTitle(): string
+    {
+        return 'Ajouter un nouvel agent';
+    }
 }

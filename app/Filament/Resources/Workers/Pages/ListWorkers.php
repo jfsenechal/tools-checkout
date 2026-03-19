@@ -22,7 +22,7 @@ final class ListWorkers extends ListRecords
                 ->color('info')
                 ->url(route('print.qrcodes'), shouldOpenInNewTab: true),
             Actions\CreateAction::make()
-                ->label('Nouveau travailleur')
+                ->label('Nouvel agent')
                 ->icon(Heroicon::PlusCircle),
         ];
     }

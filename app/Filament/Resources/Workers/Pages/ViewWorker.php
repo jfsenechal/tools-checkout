@@ -12,6 +12,11 @@ final class ViewWorker extends ViewRecord
 {
     protected static string $resource = WorkerResource::class;
 
+    public function getTitle(): string
+    {
+        return $this->record->first_name.' '.$this->record->last_name;
+    }
+
     protected function getHeaderActions(): array
     {
         return [

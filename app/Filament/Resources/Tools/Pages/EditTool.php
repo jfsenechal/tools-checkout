@@ -13,6 +13,11 @@ final class EditTool extends EditRecord
 {
     protected static string $resource = ToolResource::class;
 
+    public function getTitle(): string
+    {
+        return $this->record->name .' '.$this->record->manufacturer;
+    }
+
     protected function getHeaderActions(): array
     {
         return [

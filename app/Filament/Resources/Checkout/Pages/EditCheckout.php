@@ -14,6 +14,11 @@ final class EditCheckout extends EditRecord
 {
     protected static string $resource = CheckoutResource::class;
 
+    public function getTitle(): string
+    {
+        return $this->record->name .' '.$this->record->manufacturer;
+    }
+
     protected function getHeaderActions(): array
     {
         return [

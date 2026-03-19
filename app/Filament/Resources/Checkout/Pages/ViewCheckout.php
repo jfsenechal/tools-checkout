@@ -12,6 +12,11 @@ final class ViewCheckout extends ViewRecord
 {
     protected static string $resource = CheckoutResource::class;
 
+    public function getTitle(): string
+    {
+        return $this->record->company ?? 'Empty name';
+    }
+
     protected function getHeaderActions(): array
     {
         return [
