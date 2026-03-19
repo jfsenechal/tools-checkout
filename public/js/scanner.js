@@ -61,17 +61,31 @@ function scannerApp() {
         },
 
         async startCamera() {
+            this.cameraActive = true;
+            this.scanning = true;
+
+            // Wait for Alpine to update the DOM (x-show on video elements)
+            await this.$nextTick();
+
             this.initCameraElements();
+
+            if (!this.video) {
+                this.showMessage('Élément vidéo introuvable', 'error');
+                this.cameraActive = false;
+                this.scanning = false;
+                return;
+            }
+
             try {
                 const stream = await navigator.mediaDevices.getUserMedia({
                     video: { facingMode: 'environment' }
                 });
                 this.video.srcObject = stream;
                 await this.video.play();
-                this.cameraActive = true;
-                this.scanning = true;
                 this.startScanning();
             } catch (error) {
+                this.cameraActive = false;
+                this.scanning = false;
                 this.showMessage('Accès à la caméra refusé ou indisponible', 'error');
             }
         },
