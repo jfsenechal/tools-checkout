@@ -25,13 +25,14 @@ final class DatabaseSeeder extends Seeder
     public function run(): void
     {
         $this->command->info('Creating workers...');
-        $workers = $this->createWorkers();
+        $workers = Worker::factory()->count(5)->create()->all();
 
         $this->command->info('Creating tools...');
         $tools = $this->createTools();
 
         $this->command->info('Generating QR codes...');
         $this->generateQRCodes($tools);
+        $this->generateQRCodes($workers);
 
         $this->command->info('Creating sample checkouts...');
         $this->createCheckouts($tools, $workers);
@@ -40,147 +41,100 @@ final class DatabaseSeeder extends Seeder
 
         User::factory()->create([
             'name' => config('app.default_user.name'),
+            'username' => config('app.default_user.name'),
             'email' => config('app.default_user.email'),
             'password' => bcrypt(config('app.default_user.password')),
         ]);
     }
 
-    private function createWorkers(): array
-    {
-        $workers = [
-            [
-                'first_name' => 'John',
-                'last_name' => 'Smith',
-                'email' => 'john.smith@example.com',
-                'phone' => '555-0101',
-                'status' => 'active',
-            ],
-            [
-                'first_name' => 'Maria',
-                'last_name' => 'Garcia',
-                'email' => 'maria.garcia@example.com',
-                'phone' => '555-0102',
-                'status' => 'active',
-            ],
-            [
-                'first_name' => 'David',
-                'last_name' => 'Chen',
-                'email' => 'david.chen@example.com',
-                'phone' => '555-0103',
-                'status' => 'active',
-            ],
-            [
-                'first_name' => 'Sarah',
-                'last_name' => 'Johnson',
-                'email' => 'sarah.johnson@example.com',
-                'phone' => '555-0104',
-                'status' => 'active',
-            ],
-            [
-                'first_name' => 'Michael',
-                'last_name' => 'Brown',
-                'email' => 'michael.brown@example.com',
-                'phone' => '555-0105',
-                'status' => 'active',
-            ],
-        ];
-
-        $created = [];
-        foreach ($workers as $worker) {
-            $created[] = Worker::create($worker);
-        }
-
-        return $created;
-    }
-
     private function createTools(): array
     {
         $tools = [
-            // Power Tools
+            // Outils électriques
             [
-                'name' => 'DeWalt 20V Cordless Drill',
-                'category' => 'Power Tools',
-                'description' => '20V MAX lithium-ion cordless drill/driver',
+                'name' => 'Perceuse sans fil DeWalt 20V',
+                'category' => 'Outils électriques',
+                'description' => 'Perceuse/visseuse sans fil lithium-ion 20V MAX',
                 'status' => 'available',
                 'manufacturer' => 'DeWalt',
                 'model' => 'DCD771C2',
             ],
             [
-                'name' => 'Milwaukee Circular Saw',
-                'category' => 'Power Tools',
-                'description' => '7-1/4" circular saw with electric brake',
+                'name' => 'Scie circulaire Milwaukee',
+                'category' => 'Outils électriques',
+                'description' => 'Scie circulaire 7-1/4" avec frein électrique',
                 'status' => 'available',
                 'manufacturer' => 'Milwaukee',
                 'model' => '6390-21',
             ],
             [
-                'name' => 'Makita Angle Grinder',
-                'category' => 'Power Tools',
-                'description' => '4-1/2" angle grinder with paddle switch',
+                'name' => 'Meuleuse d\'angle Makita',
+                'category' => 'Outils électriques',
+                'description' => 'Meuleuse d\'angle 4-1/2" avec interrupteur à palette',
                 'status' => 'available',
                 'manufacturer' => 'Makita',
                 'model' => '9557PBX1',
             ],
 
-            // Hand Tools
+            // Outils à main
             [
-                'name' => 'Stanley Hammer',
-                'category' => 'Hand Tools',
-                'description' => '16 oz fiberglass handle claw hammer',
+                'name' => 'Marteau Stanley',
+                'category' => 'Outils à main',
+                'description' => 'Marteau arrache-clou manche fibre de verre 16 oz',
                 'status' => 'available',
                 'manufacturer' => 'Stanley',
                 'model' => '51-163',
             ],
             [
-                'name' => 'Craftsman Wrench Set',
-                'category' => 'Hand Tools',
-                'description' => 'SAE and metric combination wrench set',
+                'name' => 'Jeu de clés Craftsman',
+                'category' => 'Outils à main',
+                'description' => 'Jeu de clés mixtes SAE et métriques',
                 'status' => 'available',
                 'manufacturer' => 'Craftsman',
                 'model' => 'CMMT12024',
             ],
 
-            // Measuring Tools
+            // Outils de mesure
             [
-                'name' => 'Bosch Laser Level',
-                'category' => 'Measuring Tools',
-                'description' => 'Self-leveling cross-line laser with mounting bracket',
+                'name' => 'Niveau laser Bosch',
+                'category' => 'Outils de mesure',
+                'description' => 'Laser à lignes croisées auto-nivelant avec support de montage',
                 'status' => 'available',
                 'manufacturer' => 'Bosch',
                 'model' => 'GLL 30',
             ],
             [
-                'name' => 'Stanley Tape Measure',
-                'category' => 'Measuring Tools',
-                'description' => '25ft PowerLock tape measure',
+                'name' => 'Ruban à mesurer Stanley',
+                'category' => 'Outils de mesure',
+                'description' => 'Ruban à mesurer PowerLock 7,5 m',
                 'status' => 'available',
                 'manufacturer' => 'Stanley',
                 'model' => '33-525',
             ],
 
-            // Safety Equipment
+            // Équipement de sécurité
             [
-                'name' => 'Safety Harness',
-                'category' => 'Safety Equipment',
-                'description' => 'Full body safety harness with D-ring',
+                'name' => 'Harnais de sécurité',
+                'category' => 'Équipement de sécurité',
+                'description' => 'Harnais de sécurité intégral avec anneau en D',
                 'status' => 'available',
                 'manufacturer' => '3M',
                 'model' => 'Protecta',
             ],
 
-            // Ladders
+            // Échelles et échafaudages
             [
-                'name' => 'Werner Extension Ladder',
-                'category' => 'Ladders & Scaffolding',
-                'description' => '24ft aluminum extension ladder, 225lb capacity',
+                'name' => 'Échelle coulissante Werner',
+                'category' => 'Échelles et échafaudages',
+                'description' => 'Échelle coulissante aluminium 7,3 m, capacité 100 kg',
                 'status' => 'available',
                 'manufacturer' => 'Werner',
                 'model' => 'D1224-2',
             ],
             [
-                'name' => 'Little Giant Step Ladder',
-                'category' => 'Ladders & Scaffolding',
-                'description' => '6ft aluminum step ladder',
+                'name' => 'Escabeau Little Giant',
+                'category' => 'Échelles et échafaudages',
+                'description' => 'Escabeau aluminium 1,8 m',
                 'status' => 'available',
                 'manufacturer' => 'Little Giant',
                 'model' => 'King Kombo',
@@ -195,13 +149,16 @@ final class DatabaseSeeder extends Seeder
         return $created;
     }
 
-    private function generateQRCodes(array $tools): void
+    private function generateQRCodes(array $records): void
     {
         $qrService = app(QRCodeService::class);
 
-        foreach ($tools as $tool) {
-            $filename = $qrService->generateForTool($tool);
-            $tool->update(['qr_code' => $filename]);
+        foreach ($records as $record) {
+            $filename = match (true) {
+                $record instanceof Tool => $qrService->generateForTool($record),
+                $record instanceof Worker => $qrService->generateForWorker($record),
+            };
+            $record->update(['qr_code' => $filename]);
         }
     }
 
@@ -214,7 +171,7 @@ final class DatabaseSeeder extends Seeder
             'checked_out_at' => Carbon::now()->subDays(2),
             'expected_return_at' => Carbon::now()->addDays(5),
             'condition_out' => 'good',
-            'checkout_notes' => 'Need for warehouse project',
+            'checkout_notes' => 'Besoin pour le projet d\'entrepôt',
         ]);
 
         $tools[0]->markAsCheckedOut();
@@ -225,7 +182,7 @@ final class DatabaseSeeder extends Seeder
             'checked_out_at' => Carbon::now()->subDays(1),
             'expected_return_at' => Carbon::now()->addDays(3),
             'condition_out' => 'excellent',
-            'checkout_notes' => 'Metal cutting work',
+            'checkout_notes' => 'Travaux de découpe de métal',
         ]);
 
         $tools[2]->markAsCheckedOut();
@@ -237,7 +194,7 @@ final class DatabaseSeeder extends Seeder
             'checked_out_at' => Carbon::now()->subDays(10),
             'expected_return_at' => Carbon::now()->subDays(3),
             'condition_out' => 'good',
-            'checkout_notes' => 'Floor leveling project',
+            'checkout_notes' => 'Projet de nivellement de sol',
             'is_overdue' => true,
         ]);
 
@@ -252,8 +209,8 @@ final class DatabaseSeeder extends Seeder
             'returned_at' => Carbon::now()->subDays(7),
             'condition_out' => 'good',
             'condition_in' => 'good',
-            'checkout_notes' => 'Cutting plywood sheets',
-            'return_notes' => 'Returned in good condition',
+            'checkout_notes' => 'Découpe de panneaux de contreplaqué',
+            'return_notes' => 'Retourné en bon état',
         ]);
 
         Checkout::create([
@@ -264,8 +221,8 @@ final class DatabaseSeeder extends Seeder
             'returned_at' => Carbon::now()->subDays(14),
             'condition_out' => 'excellent',
             'condition_in' => 'good',
-            'checkout_notes' => 'Pipe fitting work',
-            'return_notes' => 'Minor wear, still functional',
+            'checkout_notes' => 'Travaux de plomberie',
+            'return_notes' => 'Usure mineure, toujours fonctionnel',
         ]);
     }
 }
