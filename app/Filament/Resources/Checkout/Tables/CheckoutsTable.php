@@ -95,7 +95,14 @@ final class CheckoutsTable
             ])
             ->toolbarActions([
                 BulkActionGroup::make([
-                    DeleteBulkAction::make(),
+                    DeleteBulkAction::make()
+                        ->after(function ($records) {
+                            $records->each(function (Checkout $record) {
+                                if (! $record->returned_at) {
+                                    $record->tool->markAsAvailable();
+                                }
+                            });
+                        }),
                 ]),
             ])
             ->defaultSort('checked_out_at', 'desc');
