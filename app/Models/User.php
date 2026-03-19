@@ -61,8 +61,7 @@ final class User extends Authenticatable implements FilamentUser, HasAppAuthenti
 
     public function canAccessPanel(Panel $panel): bool
     {
-        /* TODO: Please implement your own logic here. */
-        return true; // str_ends_with($this->email, '@larament.test');
+        return $panel->getId() === 'admin';
     }
 
     public function getAppAuthenticationSecret(): ?string
