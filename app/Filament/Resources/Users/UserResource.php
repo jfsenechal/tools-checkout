@@ -28,7 +28,7 @@ final class UserResource extends Resource
 
     protected static ?int $navigationSort = 13;
 
-    protected static ?string $recordTitleAttribute = 'name';
+    protected static ?string $recordTitleAttribute = 'last_name';
 
     public static function getNavigationLabel(): string
     {
@@ -43,7 +43,6 @@ final class UserResource extends Resource
     public static function getGloballySearchableAttributes(): array
     {
         return [
-            'name',
             'first_name',
             'last_name',
             'email',

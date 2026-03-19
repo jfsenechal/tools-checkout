@@ -10,6 +10,7 @@ use Database\Factories\UserFactory;
 use Filament\Auth\MultiFactor\App\Contracts\HasAppAuthentication;
 use Filament\Auth\MultiFactor\App\Contracts\HasAppAuthenticationRecovery;
 use Filament\Models\Contracts\FilamentUser;
+use Filament\Models\Contracts\HasName;
 use Filament\Panel;
 use Illuminate\Database\Eloquent\Attributes\UseFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -18,7 +19,7 @@ use Illuminate\Notifications\Notifiable;
 use LdapRecord\Models\Model;
 
 #[UseFactory(UserFactory::class)]
-final class User extends Authenticatable implements FilamentUser, HasAppAuthentication, HasAppAuthenticationRecovery
+final class User extends Authenticatable implements FilamentUser, HasAppAuthentication, HasAppAuthenticationRecovery, HasName
 {
     use HasFactory, Notifiable;
 
@@ -51,6 +52,11 @@ final class User extends Authenticatable implements FilamentUser, HasAppAuthenti
             'last_name' => $userLdap->getFirstAttribute('sn'),
             'email' => $email,
         ];
+    }
+
+    public function getFilamentName(): string
+    {
+        return "{$this->first_name} {$this->last_name}";
     }
 
     public function canAccessPanel(Panel $panel): bool

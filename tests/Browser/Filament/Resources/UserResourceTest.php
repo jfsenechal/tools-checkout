@@ -11,16 +11,15 @@ it('can create a new user', function () {
     $user = User::factory()->make();
 
     visit('/admin')
-        ->click('Users')
+        ->click('Utilisateurs')
         ->click('New user')
-        ->fill('form.name', $user->name)
+        ->fill('form.username', $user->username)
         ->fill('form.email', $user->email)
-        ->fill('form.password', 'password')
         ->press('.fi-ac-btn-action[type=submit]')
         ->assertSee('Created');
 
     assertDatabaseHas('users', [
-        'name' => $user->name,
+        'username' => $user->username,
         'email' => $user->email,
     ]);
 });
@@ -29,20 +28,20 @@ it('can edit an existing user', function () {
     $newRecord = User::factory()->make();
 
     visit('/admin')
-        ->click('Users')
+        ->click('Utilisateurs')
         ->click('Edit')
-        ->fill('form.name', $newRecord->name)
+        ->fill('form.first_name', $newRecord->first_name)
         ->click('.fi-ac-btn-action[type=submit]')
         ->assertSee('Saved');
 
     assertDatabaseHas('users', [
-        'name' => $newRecord->name,
+        'first_name' => $newRecord->first_name,
     ]);
 });
 
 it('can delete an existing user', function () {
     visit('/admin')
-        ->click('Users')
+        ->click('Utilisateurs')
         ->click('Edit')
         ->click('Delete')
         ->click('.fi-modal-window button[type=submit]')
