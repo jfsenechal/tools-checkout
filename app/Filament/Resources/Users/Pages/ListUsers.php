@@ -13,6 +13,7 @@ use Filament\Notifications\Notification;
 use Filament\Resources\Pages\ListRecords;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
+use Illuminate\Contracts\Support\Htmlable;
 
 final class ListUsers extends ListRecords
 {
@@ -21,6 +22,11 @@ final class ListUsers extends ListRecords
     public function getTitle(): string
     {
         return $this->getAllTableRecordsCount().' utilisateurs';
+    }
+
+    public function getSubheading(): string|Htmlable|null
+    {
+        return 'Les utilisateurs se synchronisent avec la LDAP';
     }
 
     protected function getHeaderActions(): array
