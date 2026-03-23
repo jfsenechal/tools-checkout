@@ -77,7 +77,7 @@
                     'bg-blue-100 text-blue-800': scannedTool?.status === 'maintenance',
                     'bg-red-100 text-red-800': scannedTool?.status === 'retired'
                 }"
-                x-text="scannedTool?.status?.replace('_', ' ').toUpperCase()">
+                x-text="statusLabel(scannedTool?.status)">
             </span>
         </div>
 

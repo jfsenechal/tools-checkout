@@ -423,6 +423,16 @@ function scannerApp() {
             }, 5000);
         },
 
+        statusLabel(status) {
+            const labels = {
+                'available': 'Disponible',
+                'checked_out': 'Emprunté',
+                'maintenance': 'En maintenance',
+                'retired': 'Retiré',
+            };
+            return labels[status] || status;
+        },
+
         formatDate(dateString) {
             if (!dateString) return 'N/A';
             return new Date(dateString).toLocaleString();
