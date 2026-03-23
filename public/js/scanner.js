@@ -17,6 +17,8 @@ function scannerApp() {
         scanInterval: null,
         detectedQRData: null,
         qrDetected: false,
+        qrLockTimeout: null,
+        qrConsecutiveHits: 0,
 
         init() {
             this.initCameraElements();
@@ -99,6 +101,8 @@ function scannerApp() {
             this.scanning = false;
             this.detectedQRData = null;
             this.qrDetected = false;
+            this.qrConsecutiveHits = 0;
+            clearTimeout(this.qrLockTimeout);
             if (this.scanInterval) {
                 clearInterval(this.scanInterval);
             }
@@ -132,20 +136,36 @@ function scannerApp() {
             const code = jsQR(imageData.data, imageData.width, imageData.height);
 
             if (code) {
-                this.detectedQRData = code.data;
-                this.qrDetected = true;
+                this.qrConsecutiveHits++;
+                // Require 2 consecutive detections to avoid false positives
+                if (this.qrConsecutiveHits >= 2) {
+                    this.detectedQRData = code.data;
+                    this.qrDetected = true;
+                    // Reset the lock timeout — keep detected state stable
+                    clearTimeout(this.qrLockTimeout);
+                    this.qrLockTimeout = setTimeout(() => {
+                        // Only reset if not already confirmed
+                        if (this.qrDetected) {
+                            this.detectedQRData = null;
+                            this.qrDetected = false;
+                            this.qrConsecutiveHits = 0;
+                        }
+                    }, 2000);
+                }
             } else {
-                this.detectedQRData = null;
-                this.qrDetected = false;
+                // Don't immediately reset — let the lock timeout handle it
+                this.qrConsecutiveHits = Math.max(0, this.qrConsecutiveHits - 1);
             }
         },
 
         confirmScan() {
             if (!this.detectedQRData) return;
             this.playBeep();
+            clearTimeout(this.qrLockTimeout);
             const qrData = this.detectedQRData;
             this.detectedQRData = null;
             this.qrDetected = false;
+            this.qrConsecutiveHits = 0;
             this.handleQRCode(qrData);
         },
 
