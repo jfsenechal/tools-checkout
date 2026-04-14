@@ -20,65 +20,42 @@ final class WorkersTable
     public static function configure(Table $table): Table
     {
         return $table
+            ->defaultPaginationPageOption(30)
             ->columns([
                 Tables\Columns\TextColumn::make('first_name')
                     ->label('Prénom')
                     ->searchable()
                     ->sortable(),
-
                 Tables\Columns\TextColumn::make('last_name')
                     ->label('Nom')
                     ->searchable()
                     ->sortable()
                     ->weight('bold'),
-
-                Tables\Columns\TextColumn::make('status')
-                    ->label('Statut')
-                    ->badge()
-                    ->color(fn (string $state): string => match ($state) {
-                        'active' => 'success',
-                        'inactive' => 'gray',
-                        'suspended' => 'danger',
-                    })
-                    ->sortable(),
-
                 Tables\Columns\TextColumn::make('activeCheckouts.count')
                     ->label('Emprunts actifs')
                     ->counts('activeCheckouts')
                     ->badge()
-                    ->color('warning'),
-
+                    ->color('warning')
+                    ->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\TextColumn::make('email')
                     ->label('Courriel')
                     ->searchable()
                     ->toggleable(isToggledHiddenByDefault: true),
-
                 Tables\Columns\TextColumn::make('phone')
                     ->label('Téléphone')
                     ->searchable()
                     ->toggleable(isToggledHiddenByDefault: true),
-
                 Tables\Columns\IconColumn::make('qr_code')
                     ->label('QR')
                     ->boolean()
                     ->sortable(),
-
                 Tables\Columns\TextColumn::make('created_at')
                     ->label('Créé le')
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
-            ->filters([
-                Tables\Filters\SelectFilter::make('status')
-                    ->label('Statut')
-                    ->options([
-                        'active' => 'Actif',
-                        'inactive' => 'Inactif',
-                        'suspended' => 'Suspendu',
-                    ])
-                    ->multiple(),
-            ])
+            ->filters([ ])
             ->recordActions([
                 GenerateQrAction::make(),
                 ViewQrAction::make(),

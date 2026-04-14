@@ -3,16 +3,19 @@
         "claude_code"
     ],
     "guidelines": true,
-    "herd_mcp": false,
     "mcp": true,
-    "nightwatch_mcp": false,
+    "nightwatch_mcp": true,
     "packages": [
         "filament/filament",
-        "filament/blueprint"
+        "filament/blueprint",
+        "fruitcake/laravel-debugbar"
     ],
     "sail": false,
     "skills": [
+        "laravel-best-practices",
+        "configure-nightwatch",
         "pest-testing",
-        "tailwindcss-development"
+        "tailwindcss-development",
+        "debug-using-debugbar"
     ]
 }

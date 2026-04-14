@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Filament\Resources\Workers\Schemas;
 
-use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Schemas\Components\Section;
@@ -46,17 +45,6 @@ final class WorkerForm
                             ->label('Notes')
                             ->rows(3)
                             ->columnSpanFull(),
-
-                        Select::make('status')
-                            ->label('Statut')
-                            ->options([
-                                'active' => 'Actif',
-                                'inactive' => 'Inactif',
-                                'suspended' => 'Suspendu',
-                            ])
-                            ->default('active')
-                            ->required()
-                            ->native(false),
                     ])
                     ->collapsible()
                     ->collapsed(false),

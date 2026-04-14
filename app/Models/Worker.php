@@ -24,14 +24,13 @@ final class Worker extends Model
         'qr_code',
         'email',
         'phone',
-        'status',
         'notes',
     ];
 
     public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()
-            ->logOnly(['first_name', 'last_name', 'status'])
+            ->logOnly(['first_name', 'last_name'])
             ->logOnlyDirty()
             ->dontSubmitEmptyLogs();
     }
@@ -48,23 +47,12 @@ final class Worker extends Model
             ->whereNull('returned_at');
     }
 
-    // Scopes
-    public function scopeActive($query)
-    {
-        return $query->where('status', 'active');
-    }
-
     // Accessors
     public function getQrCodeUrlAttribute(): string
     {
         return $this->qr_code
             ? asset('storage/qrcodes/'.$this->qr_code)
             : '';
-    }
-
-    public function getIsActiveAttribute(): bool
-    {
-        return $this->status === 'active';
     }
 
     public function getHasActiveCheckoutsAttribute(): bool

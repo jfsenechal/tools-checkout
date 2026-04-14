@@ -28,15 +28,6 @@ final class WorkerInfolist
 
                         TextEntry::make('phone')
                             ->label('Téléphone'),
-
-                        TextEntry::make('status')
-                            ->label('Statut')
-                            ->badge()
-                            ->color(fn (string $state): string => match ($state) {
-                                'active' => 'success',
-                                'inactive' => 'gray',
-                                'suspended' => 'danger',
-                            }),
                     ])->columns(2),
 
                 Section::make('Notes supplémentaires')

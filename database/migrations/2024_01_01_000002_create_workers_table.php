@@ -16,18 +16,9 @@ return new class extends Migration
             $table->string('last_name');
             $table->string('email')->unique()->nullable();
             $table->string('phone')->nullable();
-            $table->enum('status', ['active', 'inactive', 'suspended'])
-                ->default('active');
             $table->text('notes')->nullable();
             $table->timestamps();
             $table->softDeletes();
-
-            $table->index('status');
         });
-    }
-
-    public function down(): void
-    {
-        Schema::dropIfExists('workers');
     }
 };
