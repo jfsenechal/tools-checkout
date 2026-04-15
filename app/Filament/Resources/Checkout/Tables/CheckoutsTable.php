@@ -75,6 +75,22 @@ final class CheckoutsTable
                         ->where('expected_return_at', '<', now())
                     ),
 
+                Tables\Filters\Filter::make('checked_out_at')
+                    ->label('Date d\'emprunt')
+                    ->form([
+                        \Filament\Forms\Components\DatePicker::make('from')
+                            ->label('Du')
+                            ->native(false),
+                        \Filament\Forms\Components\DatePicker::make('until')
+                            ->label('Au')
+                            ->native(false),
+                    ])
+                    ->query(function (Builder $query, array $data): Builder {
+                        return $query
+                            ->when($data['from'], fn (Builder $q, $date) => $q->whereDate('checked_out_at', '>=', $date))
+                            ->when($data['until'], fn (Builder $q, $date) => $q->whereDate('checked_out_at', '<=', $date));
+                    }),
+
                 Tables\Filters\SelectFilter::make('tool')
                     ->label('Outil')
                     ->relationship('tool', 'name')
