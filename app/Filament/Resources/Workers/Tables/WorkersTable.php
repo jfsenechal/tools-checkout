@@ -7,6 +7,8 @@ namespace App\Filament\Resources\Workers\Tables;
 use App\Filament\Resources\Workers\Actions\GenerateQrAction;
 use App\Filament\Resources\Workers\Actions\GenerateQrCodesBulkAction;
 use App\Filament\Resources\Workers\Actions\ViewQrAction;
+use App\Models\Worker;
+use Filament\Actions\BulkAction;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
@@ -14,6 +16,7 @@ use Filament\Actions\EditAction;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Collection;
 
 final class WorkersTable
 {
@@ -77,6 +80,17 @@ final class WorkersTable
             ])
             ->toolbarActions([
                 BulkActionGroup::make([
+                    BulkAction::make('printQrCodes')
+                        ->label('Imprimer QR')
+                        ->icon('heroicon-o-printer')
+                        ->deselectRecordsAfterCompletion()
+                        ->action(function (Collection $records, $livewire): void {
+                            $ids = $records->filter(fn (Worker $worker) => $worker->qr_code !== null)->pluck('id')->join(',');
+
+                            if ($ids !== '') {
+                                $livewire->js("window.open('/print/qrcodes?workers={$ids}', '_blank')");
+                            }
+                        }),
                     GenerateQrCodesBulkAction::make(),
                     DeleteBulkAction::make(),
                 ]),

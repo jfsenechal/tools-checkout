@@ -126,7 +126,7 @@
                 <img src="{{ $tool->qr_code_url }}" alt="QR {{ $tool->name }}">
                 <div class="label">{{ $tool->name }}</div>
                 @if($tool->category)
-                    <div class="sublabel">{{ $tool->category }}</div>
+                    <div class="sublabel">{{ $tool->category->name }}</div>
                 @endif
             </div>
         @endforeach
