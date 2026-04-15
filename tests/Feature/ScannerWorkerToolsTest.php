@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Enums\StatusToolEnum;
+use App\Models\Category;
 use App\Models\Checkout;
 use App\Models\Tool;
 use App\Models\Worker;
@@ -15,9 +16,11 @@ it('returns active checkouts for a worker', function () {
         'status' => 'active',
     ]);
 
+    $category = Category::factory()->create(['name' => 'Power Tools']);
+
     $tool = Tool::create([
         'name' => 'Test Drill',
-        'category' => 'Power Tools',
+        'category_id' => $category->id,
         'status' => StatusToolEnum::CheckedOut,
     ]);
 
@@ -44,9 +47,11 @@ it('excludes returned checkouts', function () {
         'status' => 'active',
     ]);
 
+    $category = Category::factory()->create(['name' => 'Power Tools']);
+
     $tool = Tool::create([
         'name' => 'Returned Drill',
-        'category' => 'Power Tools',
+        'category_id' => $category->id,
         'status' => StatusToolEnum::Available,
     ]);
 
@@ -71,9 +76,11 @@ it('scans a worker QR code and returns worker with checkouts', function () {
         'status' => 'active',
     ]);
 
+    $category = Category::factory()->create(['name' => 'Hand Tools']);
+
     $tool = Tool::create([
         'name' => 'Hammer',
-        'category' => 'Hand Tools',
+        'category_id' => $category->id,
         'status' => StatusToolEnum::CheckedOut,
     ]);
 

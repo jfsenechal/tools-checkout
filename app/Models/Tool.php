@@ -7,6 +7,7 @@ namespace App\Models;
 use App\Enums\StatusToolEnum;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -20,7 +21,7 @@ final class Tool extends Model
     protected $fillable = [
         'name',
         'qr_code',
-        'category',
+        'category_id',
         'description',
         'status',
         'manufacturer',
@@ -30,12 +31,17 @@ final class Tool extends Model
     public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()
-            ->logOnly(['name', 'status', 'category'])
+            ->logOnly(['name', 'status', 'category_id'])
             ->logOnlyDirty()
             ->dontSubmitEmptyLogs();
     }
 
     // Relationships
+    public function category(): BelongsTo
+    {
+        return $this->belongsTo(Category::class);
+    }
+
     public function checkouts(): HasMany
     {
         return $this->hasMany(Checkout::class);
@@ -59,9 +65,9 @@ final class Tool extends Model
         return $query->where('status', StatusToolEnum::CheckedOut);
     }
 
-    public function scopeByCategory($query, string $category)
+    public function scopeByCategory($query, int $categoryId)
     {
-        return $query->where('category', $category);
+        return $query->where('category_id', $categoryId);
     }
 
     // Accessors & Mutators

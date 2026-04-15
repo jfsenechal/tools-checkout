@@ -21,7 +21,7 @@ final class ToolInfolist
                             ->label('Nom')
                             ->columnSpanFull(),
 
-                        TextEntry::make('category')
+                        TextEntry::make('category.name')
                             ->label('Catégorie')
                             ->badge(),
 

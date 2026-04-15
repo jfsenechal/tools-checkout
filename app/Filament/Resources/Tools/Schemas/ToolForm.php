@@ -25,17 +25,11 @@ final class ToolForm
                             ->maxLength(255)
                             ->columnSpanFull(),
 
-                        Select::make('category')
+                        Select::make('category_id')
                             ->label('Catégorie')
-                            ->options([
-                                'Power Tools' => 'Outils électriques',
-                                'Hand Tools' => 'Outils à main',
-                                'Measuring Tools' => 'Outils de mesure',
-                                'Safety Equipment' => 'Équipement de sécurité',
-                                'Ladders & Scaffolding' => 'Échelles & Échafaudages',
-                                'Other' => 'Autre',
-                            ])
+                            ->relationship('category', 'name')
                             ->searchable()
+                            ->preload()
                             ->native(false),
 
                         Select::make('status')

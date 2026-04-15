@@ -29,7 +29,7 @@ final class ToolsTable
                     ->sortable()
                     ->description(fn (Tool $record): string => $record->description ?? ''),
 
-                Tables\Columns\TextColumn::make('category')
+                Tables\Columns\TextColumn::make('category.name')
                     ->label('Catégorie')
                     ->badge()
                     ->searchable()
@@ -57,16 +57,10 @@ final class ToolsTable
                     ->options(StatusToolEnum::class)
                     ->multiple(),
 
-                Tables\Filters\SelectFilter::make('category')
+                Tables\Filters\SelectFilter::make('category_id')
                     ->label('Catégorie')
-                    ->options([
-                        'Power Tools' => 'Outils électriques',
-                        'Hand Tools' => 'Outils à main',
-                        'Measuring Tools' => 'Outils de mesure',
-                        'Safety Equipment' => 'Équipement de sécurité',
-                        'Ladders & Scaffolding' => 'Échelles & Échafaudages',
-                        'Other' => 'Autre',
-                    ])
+                    ->relationship('category', 'name')
+                    ->preload()
                     ->multiple(),
             ])
             ->recordActions([

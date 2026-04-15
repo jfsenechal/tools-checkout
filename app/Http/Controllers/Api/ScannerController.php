@@ -62,7 +62,7 @@ final class ScannerController extends Controller
                         'id' => $tool->id,
                         'name' => $tool->name,
 
-                        'category' => $tool->category,
+                        'category' => $tool->category?->name,
                         'status' => $tool->status,
                         'is_available' => $tool->is_available,
                         'is_checked_out' => $tool->is_checked_out,
@@ -144,7 +144,7 @@ final class ScannerController extends Controller
                         'tool' => [
                             'id' => $checkout->tool->id,
                             'name' => $checkout->tool->name,
-                            'category' => $checkout->tool->category,
+                            'category' => $checkout->tool->category?->name,
                         ],
                         'checked_out_at' => $checkout->checked_out_at->toIso8601String(),
                         'expected_return_at' => $checkout->expected_return_at?->toIso8601String(),
@@ -259,7 +259,7 @@ final class ScannerController extends Controller
                     'tool' => [
                         'id' => $checkout->tool->id,
                         'name' => $checkout->tool->name,
-                        'category' => $checkout->tool->category,
+                        'category' => $checkout->tool->category?->name,
                     ],
                     'checked_out_at' => $checkout->checked_out_at->toIso8601String(),
                     'expected_return_at' => $checkout->expected_return_at?->toIso8601String(),

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\Enums\StatusToolEnum;
 use App\Filament\Widgets\CheckedOutToolsWidget;
+use App\Models\Category;
 use App\Models\Checkout;
 use App\Models\Tool;
 use App\Models\User;
@@ -23,9 +24,11 @@ it('displays checked out tools on the dashboard', function () {
         'status' => 'active',
     ]);
 
+    $category = Category::factory()->create(['name' => 'Power Tools']);
+
     $tool = Tool::create([
         'name' => 'Impact Drill',
-        'category' => 'Power Tools',
+        'category_id' => $category->id,
         'status' => StatusToolEnum::CheckedOut,
     ]);
 
@@ -48,9 +51,11 @@ it('does not show returned tools', function () {
         'status' => 'active',
     ]);
 
+    $category = Category::factory()->create(['name' => 'Power Tools']);
+
     $tool = Tool::create([
         'name' => 'Returned Saw',
-        'category' => 'Power Tools',
+        'category_id' => $category->id,
         'status' => StatusToolEnum::Available,
     ]);
 
