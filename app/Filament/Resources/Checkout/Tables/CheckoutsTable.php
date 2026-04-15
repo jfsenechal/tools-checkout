@@ -10,11 +10,13 @@ use App\Models\Checkout;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
+use Filament\Support\Enums\Width;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables;
-use Filament\Tables\Table;
-use Illuminate\Database\Eloquent\Builder;use Filament\Support\Enums\Width;
 use Filament\Tables\Enums\FiltersLayout;
+use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
+
 final class CheckoutsTable
 {
     public static function configure(Table $table): Table
@@ -24,15 +26,15 @@ final class CheckoutsTable
                 Tables\Columns\TextColumn::make('tool.name')
                     ->label('Outil')
                     ->searchable()
-                    ->url(fn(Checkout $record) => CheckoutResource::getUrl('view', ['record' => $record->id]))
+                    ->url(fn (Checkout $record) => CheckoutResource::getUrl('view', ['record' => $record->id]))
                     ->sortable()
-                    ->description(fn(Checkout $record): string => $record->tool->category ?? ''),
+                    ->description(fn (Checkout $record): string => $record->tool->category ?? ''),
 
                 Tables\Columns\TextColumn::make('worker.last_name')
                     ->label('Travailleur')
                     ->searchable()
                     ->sortable()
-                    ->description(fn(Checkout $record): string => $record->worker->first_name),
+                    ->description(fn (Checkout $record): string => $record->worker->first_name),
 
                 Tables\Columns\TextColumn::make('checked_out_at')
                     ->label('Date d\'emprunt')
@@ -68,12 +70,12 @@ final class CheckoutsTable
             ->filters([
                 Tables\Filters\Filter::make('active')
                     ->label('Emprunts actifs')
-                    ->query(fn(Builder $query): Builder => $query->whereNull('returned_at'))
+                    ->query(fn (Builder $query): Builder => $query->whereNull('returned_at'))
                     ->default(),
 
                 Tables\Filters\Filter::make('overdue')
                     ->label('En retard')
-                    ->query(fn(Builder $query): Builder => $query->whereNull('returned_at')
+                    ->query(fn (Builder $query): Builder => $query->whereNull('returned_at')
                         ->where('expected_return_at', '<', now())
                     ),
 
@@ -89,12 +91,12 @@ final class CheckoutsTable
                     ])
                     ->query(function (Builder $query, array $data): Builder {
                         return $query
-                            ->when($data['from'], fn(Builder $q, $date) => $q->whereDate('checked_out_at', '>=', $date))
-                            ->when($data['until'], fn(Builder $q, $date) => $q->whereDate('checked_out_at', '<=', $date)
+                            ->when($data['from'], fn (Builder $q, $date) => $q->whereDate('checked_out_at', '>=', $date))
+                            ->when($data['until'], fn (Builder $q, $date) => $q->whereDate('checked_out_at', '<=', $date)
                             );
                     })
                     ->columns(2)
-                ->columnSpanFull(),
+                    ->columnSpanFull(),
                 Tables\Filters\SelectFilter::make('tool')
                     ->label('Outil')
                     ->relationship('tool', 'name')
@@ -117,7 +119,7 @@ final class CheckoutsTable
                     DeleteBulkAction::make()
                         ->after(function ($records) {
                             $records->each(function (Checkout $record) {
-                                if (!$record->returned_at) {
+                                if (! $record->returned_at) {
                                     $record->tool->markAsAvailable();
                                 }
                             });

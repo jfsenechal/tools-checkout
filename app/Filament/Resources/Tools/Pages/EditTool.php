@@ -15,7 +15,7 @@ final class EditTool extends EditRecord
 
     public function getTitle(): string
     {
-        return $this->record->name .' '.$this->record->manufacturer;
+        return $this->record->name.' '.$this->record->manufacturer;
     }
 
     protected function getHeaderActions(): array

@@ -14,7 +14,7 @@ final class ViewTool extends ViewRecord
 
     public function getTitle(): string
     {
-        return $this->record->name .' '.$this->record->manufacturer;
+        return $this->record->name.' '.$this->record->manufacturer;
     }
 
     protected function getHeaderActions(): array
