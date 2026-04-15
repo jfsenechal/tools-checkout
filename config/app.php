@@ -21,4 +21,5 @@ return [
         'email' => env('DEFAULT_USER_EMAIL', 'admin@example.com'),
         'password' => env('DEFAULT_USER_PASSWORD', 'password'),
     ],
+    'timezone' => 'Europe/Brussels',
 ];
