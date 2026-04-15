@@ -16,7 +16,13 @@ final class EditCheckout extends EditRecord
 
     public function getTitle(): string
     {
-        return $this->record->name .' '.$this->record->manufacturer;
+        $worker = $this->record->worker;
+
+        if (! $worker) {
+            return 'Emprunt #'.$this->record->id;
+        }
+
+        return $worker->last_name.' '.$worker->first_name.' => '.$this->record->tool->name;
     }
 
     protected function getHeaderActions(): array

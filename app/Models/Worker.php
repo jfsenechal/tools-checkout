@@ -8,15 +8,15 @@ use Database\Factories\WorkerFactory;
 use Illuminate\Database\Eloquent\Attributes\UseFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\SoftDeletes;
 use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Traits\LogsActivity;
 
 #[UseFactory(WorkerFactory::class)]
 final class Worker extends Model
 {
-    use HasFactory, LogsActivity, SoftDeletes;
+    use HasFactory, LogsActivity;
 
     protected $fillable = [
         'first_name',
@@ -24,6 +24,7 @@ final class Worker extends Model
         'qr_code',
         'email',
         'phone',
+        'tag_id',
         'notes',
     ];
 
@@ -36,6 +37,11 @@ final class Worker extends Model
     }
 
     // Relationships
+    public function tag(): BelongsTo
+    {
+        return $this->belongsTo(Tag::class);
+    }
+
     public function checkouts(): HasMany
     {
         return $this->hasMany(Checkout::class);

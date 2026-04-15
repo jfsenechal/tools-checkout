@@ -9,6 +9,7 @@ use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Schemas\Components\Section;
+use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Schema;
 use Illuminate\Database\Eloquent\Builder;
 
@@ -22,7 +23,8 @@ final class CheckoutForm
                     ->schema([
                         Select::make('tool_id')
                             ->label('Outil')
-                            ->relationship('tool', 'name', fn (Builder $query) => $query->where('status', StatusToolEnum::Available))
+                            ->relationship('tool', 'name', fn (Builder $query, ?string $operation, Get $get) => $query->where('status', StatusToolEnum::Available)
+                                ->when($operation === 'edit', fn (Builder $q) => $q->orWhere('id', $get('tool_id'))))
                             ->searchable()
                             ->preload()
                             ->required()
@@ -31,12 +33,11 @@ final class CheckoutForm
 
                         Select::make('worker_id')
                             ->label('Travailleur')
-                            ->relationship('worker', 'last_name', fn (Builder $query) => $query->where('status', 'active'))
+                            ->relationship('worker', 'last_name')
                             ->searchable()
                             ->preload()
                             ->required()
-                            ->native(false)
-                            ->helperText('Seuls les travailleurs actifs sont affichés'),
+                            ->native(false),
 
                         DateTimePicker::make('checked_out_at')
                             ->label('Date d\'emprunt')

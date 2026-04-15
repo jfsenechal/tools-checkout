@@ -20,17 +20,22 @@ final class WorkersTable
     public static function configure(Table $table): Table
     {
         return $table
-            ->defaultPaginationPageOption(30)
+            ->defaultPaginationPageOption(25)
             ->columns([
-                Tables\Columns\TextColumn::make('first_name')
-                    ->label('Prénom')
-                    ->searchable()
-                    ->sortable(),
                 Tables\Columns\TextColumn::make('last_name')
                     ->label('Nom')
                     ->searchable()
                     ->sortable()
                     ->weight('bold'),
+                Tables\Columns\TextColumn::make('first_name')
+                    ->label('Prénom')
+                    ->searchable()
+                    ->sortable(),
+                Tables\Columns\TextColumn::make('tag.name')
+                    ->label('Tag')
+                    ->badge()
+                    ->searchable()
+                    ->sortable(),
                 Tables\Columns\TextColumn::make('activeCheckouts.count')
                     ->label('Emprunts actifs')
                     ->counts('activeCheckouts')
@@ -55,7 +60,13 @@ final class WorkersTable
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
-            ->filters([ ])
+            ->filters([
+                Tables\Filters\SelectFilter::make('tag_id')
+                    ->label('Tag')
+                    ->relationship('tag', 'name')
+                    ->preload()
+                    ->multiple(),
+            ])
             ->recordActions([
                 GenerateQrAction::make(),
                 ViewQrAction::make(),

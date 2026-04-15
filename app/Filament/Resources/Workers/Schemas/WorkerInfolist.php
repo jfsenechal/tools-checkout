@@ -28,6 +28,10 @@ final class WorkerInfolist
 
                         TextEntry::make('phone')
                             ->label('Téléphone'),
+
+                        TextEntry::make('tag.name')
+                            ->label('Tag')
+                            ->badge(),
                     ])->columns(2),
 
                 Section::make('Notes supplémentaires')

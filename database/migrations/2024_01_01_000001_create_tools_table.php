@@ -21,7 +21,6 @@ return new class extends Migration
             $table->string('manufacturer')->nullable();
             $table->string('model')->nullable();
             $table->timestamps();
-            $table->softDeletes();
 
             $table->index('status');
             $table->index('category');

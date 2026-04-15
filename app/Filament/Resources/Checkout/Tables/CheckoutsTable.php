@@ -105,6 +105,7 @@ final class CheckoutsTable
                         }),
                 ]),
             ])
+            ->defaultPaginationPageOption(25)
             ->defaultSort('checked_out_at', 'desc');
     }
 }

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Filament\Resources\Workers\Schemas;
 
+use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Schemas\Components\Section;
@@ -37,6 +38,13 @@ final class WorkerForm
                             ->label('Téléphone')
                             ->tel()
                             ->maxLength(255),
+
+                        Select::make('tag_id')
+                            ->label('Tag')
+                            ->relationship('tag', 'name')
+                            ->searchable()
+                            ->preload()
+                            ->native(false),
                     ])->columns(2),
 
                 Section::make('Notes supplémentaires')
