@@ -116,12 +116,12 @@ final class ScannerController extends Controller
                 ], 400);
             }
 
-            $worker = Worker::active()->find($qrData['id']);
+            $worker = Worker::find($qrData['id']);
 
             if (! $worker) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Worker not found or inactive',
+                    'message' => 'Worker not found',
                 ], 404);
             }
 
@@ -168,7 +168,7 @@ final class ScannerController extends Controller
     {
         $search = $request->get('search', '');
 
-        $workers = Worker::active()
+        $workers = Worker::query()
             ->when($search, function ($query, $search) {
                 $query->where(function ($q) use ($search) {
                     $q->where('first_name', 'like', "%{$search}%")
