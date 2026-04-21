@@ -23,13 +23,9 @@ final class QRCodeService
 
         $filename = 'tool-'.$tool->id.'-'.time().'.svg';
 
-        $qrCode = QrCode::format('svg')
-            ->size(300)
-            ->margin(2)
-            ->errorCorrection('H')
-            ->generate($qrCodeData);
+        $svg = $this->renderLabeledQr($qrCodeData, $tool->name);
 
-        Storage::disk('public')->put('qrcodes/'.$filename, $qrCode);
+        Storage::disk('public')->put('qrcodes/'.$filename, $svg);
 
         return $filename;
     }
@@ -98,13 +94,11 @@ final class QRCodeService
 
         $filename = 'worker-'.$worker->id.'-'.time().'.svg';
 
-        $qrCode = QrCode::format('svg')
-            ->size(300)
-            ->margin(2)
-            ->errorCorrection('H')
-            ->generate($qrCodeData);
+        $label = mb_trim($worker->first_name.' '.$worker->last_name);
 
-        Storage::disk('public')->put('qrcodes/'.$filename, $qrCode);
+        $svg = $this->renderLabeledQr($qrCodeData, $label);
+
+        Storage::disk('public')->put('qrcodes/'.$filename, $svg);
 
         return $filename;
     }
@@ -141,5 +135,36 @@ final class QRCodeService
         $worker->update(['qr_code' => $filename]);
 
         return $filename;
+    }
+
+    /**
+     * Render a QR code SVG with a visible text label underneath.
+     */
+    private function renderLabeledQr(string $data, string $label): string
+    {
+        $qrSize = 300;
+        $labelHeight = 40;
+        $totalHeight = $qrSize + $labelHeight;
+
+        $qrSvg = (string) QrCode::format('svg')
+            ->size($qrSize)
+            ->margin(2)
+            ->errorCorrection('H')
+            ->generate($data);
+
+        // Strip XML prolog so the QR <svg> can be embedded as a nested element.
+        $qrInner = preg_replace('/<\?xml[^>]*\?>\s*/', '', $qrSvg);
+
+        $escapedLabel = htmlspecialchars($label, ENT_XML1 | ENT_QUOTES, 'UTF-8');
+        $textX = (int) ($qrSize / 2);
+        $textY = $qrSize + 26;
+
+        return <<<SVG
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="{$qrSize}" height="{$totalHeight}" viewBox="0 0 {$qrSize} {$totalHeight}">
+    {$qrInner}
+    <text x="{$textX}" y="{$textY}" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="16" font-weight="bold" fill="#000">{$escapedLabel}</text>
+</svg>
+SVG;
     }
 }
