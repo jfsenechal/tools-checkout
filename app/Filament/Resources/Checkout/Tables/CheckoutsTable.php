@@ -28,7 +28,7 @@ final class CheckoutsTable
                     ->searchable()
                     ->url(fn (Checkout $record) => CheckoutResource::getUrl('view', ['record' => $record->id]))
                     ->sortable()
-                    ->description(fn (Checkout $record): string => $record->tool->category ?? ''),
+                    ->description(fn (Checkout $record): string => $record->tool->category?->name ?? ''),
 
                 Tables\Columns\TextColumn::make('worker.last_name')
                     ->label('Travailleur')
