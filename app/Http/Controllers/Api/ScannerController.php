@@ -36,9 +36,9 @@ final class ScannerController extends Controller
         }
 
         try {
-            $qrData = json_decode($request->qr_data, true);
+            $qrData = $this->parseQrData($request->qr_data);
 
-            if (! isset($qrData['type']) || $qrData['type'] !== 'tool') {
+            if ($qrData === null || $qrData['type'] !== 'tool') {
                 return response()->json([
                     'success' => false,
                     'message' => 'Invalid QR code type',
@@ -107,9 +107,9 @@ final class ScannerController extends Controller
         }
 
         try {
-            $qrData = json_decode($request->qr_data, true);
+            $qrData = $this->parseQrData($request->qr_data);
 
-            if (! isset($qrData['type']) || $qrData['type'] !== 'worker') {
+            if ($qrData === null || $qrData['type'] !== 'worker') {
                 return response()->json([
                     'success' => false,
                     'message' => 'Invalid QR code type — expected worker',
@@ -312,5 +312,24 @@ final class ScannerController extends Controller
                 'message' => $e->getMessage(),
             ], 400);
         }
+    }
+
+    /**
+     * Parse a scanned QR code string into its type and id.
+     *
+     * Expected format: `GSTOCK:T:24` (tool) or `GSTOCK:W:7` (worker).
+     *
+     * @return array{type: string, id: int}|null
+     */
+    private function parseQrData(string $raw): ?array
+    {
+        if (! preg_match('/^GSTOCK:([TW]):(\d+)$/', mb_trim($raw), $matches)) {
+            return null;
+        }
+
+        return [
+            'type' => $matches[1] === 'T' ? 'tool' : 'worker',
+            'id' => (int) $matches[2],
+        ];
     }
 }

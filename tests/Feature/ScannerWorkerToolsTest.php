@@ -90,7 +90,7 @@ it('scans a worker QR code and returns worker with checkouts', function () {
         'checked_out_at' => now(),
     ]);
 
-    $qrData = json_encode(['type' => 'worker', 'id' => $worker->id]);
+    $qrData = 'GSTOCK:W:'.$worker->id;
 
     $response = $this->postJson('/api/scanner/scan-worker', ['qr_data' => $qrData]);
 
@@ -103,7 +103,7 @@ it('scans a worker QR code and returns worker with checkouts', function () {
 });
 
 it('rejects non-worker QR code in scan-worker endpoint', function () {
-    $qrData = json_encode(['type' => 'tool', 'id' => 1]);
+    $qrData = 'GSTOCK:T:1';
 
     $response = $this->postJson('/api/scanner/scan-worker', ['qr_data' => $qrData]);
 
@@ -119,7 +119,7 @@ it('returns 404 for inactive worker QR scan', function () {
         'status' => 'inactive',
     ]);
 
-    $qrData = json_encode(['type' => 'worker', 'id' => $worker->id]);
+    $qrData = 'GSTOCK:W:'.$worker->id;
 
     $response = $this->postJson('/api/scanner/scan-worker', ['qr_data' => $qrData]);
 

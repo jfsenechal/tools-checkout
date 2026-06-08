@@ -88,7 +88,7 @@ it('runs the scanner workflow through the token api', function () {
     // Step 1: scan the worker
     $this->withToken($token)
         ->postJson('/api/scan-worker', [
-            'qr_data' => json_encode(['type' => 'worker', 'id' => $worker->id]),
+            'qr_data' => 'GSTOCK:W:'.$worker->id,
         ])
         ->assertOk()
         ->assertJsonPath('data.worker.id', $worker->id);

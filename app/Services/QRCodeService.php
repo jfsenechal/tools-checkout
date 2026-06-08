@@ -16,10 +16,7 @@ final class QRCodeService
      */
     public function generateForTool(Tool $tool): string
     {
-        $qrCodeData = json_encode([
-            'type' => 'tool',
-            'id' => $tool->id,
-        ]);
+        $qrCodeData = 'GSTOCK:T:'.$tool->id;
 
         $filename = 'tool-'.$tool->id.'-'.time().'.svg';
 
@@ -87,10 +84,7 @@ final class QRCodeService
      */
     public function generateForWorker(Worker $worker): string
     {
-        $qrCodeData = json_encode([
-            'type' => 'worker',
-            'id' => $worker->id,
-        ]);
+        $qrCodeData = 'GSTOCK:W:'.$worker->id;
 
         $filename = 'worker-'.$worker->id.'-'.time().'.svg';
 
