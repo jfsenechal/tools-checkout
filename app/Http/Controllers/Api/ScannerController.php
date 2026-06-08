@@ -116,7 +116,7 @@ final class ScannerController extends Controller
                 ], 400);
             }
 
-            $worker = Worker::find($qrData['id']);
+            $worker = Worker::active()->find($qrData['id']);
 
             if (! $worker) {
                 return response()->json([

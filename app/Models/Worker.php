@@ -24,6 +24,7 @@ final class Worker extends Model
         'qr_code',
         'email',
         'phone',
+        'status',
         'tag_id',
         'notes',
     ];
@@ -34,6 +35,12 @@ final class Worker extends Model
             ->logOnly(['first_name', 'last_name'])
             ->logOnlyDirty()
             ->dontSubmitEmptyLogs();
+    }
+
+    // Scopes
+    public function scopeActive($query)
+    {
+        return $query->where('status', 'active');
     }
 
     // Relationships
@@ -54,6 +61,11 @@ final class Worker extends Model
     }
 
     // Accessors
+    public function getIsActiveAttribute(): bool
+    {
+        return $this->status === 'active';
+    }
+
     public function getQrCodeUrlAttribute(): string
     {
         return $this->qr_code
