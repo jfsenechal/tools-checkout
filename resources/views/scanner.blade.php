@@ -50,24 +50,6 @@
 
     <main class="container mx-auto px-4 py-6 max-w-2xl">
 
-        <!-- Mode Toggle -->
-        <div class="bg-white rounded-lg shadow-lg p-2 mb-6 flex">
-            <button
-                @click="switchMode('tool-first')"
-                class="flex-1 py-3 px-4 rounded-lg font-semibold text-center transition"
-                :class="mode === 'tool-first' ? 'bg-blue-600 text-white' : 'text-gray-600 hover:bg-gray-100'">
-                Outil &rarr; Ouvrier
-            </button>
-            <button
-                @click="switchMode('worker-first')"
-                class="flex-1 py-3 px-4 rounded-lg font-semibold text-center transition"
-                :class="mode === 'worker-first' ? 'bg-blue-600 text-white' : 'text-gray-600 hover:bg-gray-100'">
-                Ouvrier &rarr; Outil
-            </button>
-        </div>
-
-        @include('scanner.tool-first')
-
         @include('scanner.worker-first')
 
         <!-- Success/Error Messages -->

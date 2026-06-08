@@ -1,15 +1,9 @@
 function scannerApp() {
     return {
-        mode: 'tool-first',
         cameraActive: false,
         scanning: false,
-        scannedTool: null,
-        currentCheckout: null,
-        showWorkerSelection: false,
         selectedWorker: null,
-        workers: [],
-        workerSearch: '',
-        loadingWorkers: false,
+        sessionTools: [],
         message: { text: '', type: '' },
         video: null,
         canvas: null,
@@ -29,37 +23,19 @@ function scannerApp() {
                     .then(() => console.log('Service worker registered'))
                     .catch(err => console.log('Service worker registration failed:', err));
             }
-
-            // Load workers on init
-            this.loadWorkers();
         },
 
         initCameraElements() {
-            if (this.mode === 'worker-first' && this.selectedWorker) {
+            if (this.selectedWorker) {
                 this.video = document.getElementById('video-tool-wf');
                 this.canvas = document.getElementById('canvas-tool-wf');
-            } else if (this.mode === 'worker-first') {
+            } else {
                 this.video = document.getElementById('video-worker');
                 this.canvas = document.getElementById('canvas-worker');
-            } else {
-                this.video = document.getElementById('video');
-                this.canvas = document.getElementById('canvas');
             }
             if (this.canvas) {
                 this.canvasContext = this.canvas.getContext('2d');
             }
-        },
-
-        switchMode(newMode) {
-            if (this.mode === newMode) return;
-            this.stopCamera();
-            this.mode = newMode;
-            this.scannedTool = null;
-            this.currentCheckout = null;
-            this.showWorkerSelection = false;
-            this.selectedWorker = null;
-            this.workerSearch = '';
-            this.loadWorkers();
         },
 
         async startCamera() {
@@ -94,7 +70,7 @@ function scannerApp() {
         },
 
         stopCamera() {
-            if (this.video.srcObject) {
+            if (this.video && this.video.srcObject) {
                 this.video.srcObject.getTracks().forEach(track => track.stop());
             }
             this.cameraActive = false;
@@ -192,42 +168,14 @@ function scannerApp() {
             this.stopCamera();
             this.scanning = false;
 
-            // Worker-first mode: step 1 — scan worker QR
-            if (this.mode === 'worker-first' && !this.selectedWorker) {
+            // Step 1 — scan worker QR
+            if (!this.selectedWorker) {
                 await this.handleWorkerQR(qrData);
                 return;
             }
 
-            // Worker-first mode: step 2 — scan tool QR for checkout
-            if (this.mode === 'worker-first' && this.selectedWorker) {
-                await this.handleToolQRForWorker(qrData);
-                return;
-            }
-
-            // Tool-first mode: scan tool QR
-            try {
-                const response = await fetch('/api/scanner/scan', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Accept': 'application/json'
-                    },
-                    body: JSON.stringify({ qr_data: qrData })
-                });
-
-                const result = await response.json();
-
-                if (result.success) {
-                    this.scannedTool = result.data.tool;
-                    this.currentCheckout = result.data.current_checkout;
-                } else {
-                    this.showMessage(result.message, 'error');
-                    setTimeout(() => this.startCamera(), 2000);
-                }
-            } catch (error) {
-                this.showMessage('Erreur lors du scan du code QR', 'error');
-                setTimeout(() => this.startCamera(), 2000);
-            }
+            // Step 2 — scan tool QR for checkout (loops until session is finished)
+            await this.handleToolQRForWorker(qrData);
         },
 
         async handleWorkerQR(qrData) {
@@ -245,7 +193,15 @@ function scannerApp() {
 
                 if (result.success) {
                     this.selectedWorker = result.data.worker;
+                    // Seed the session list with the tools the worker already holds
+                    this.sessionTools = (result.data.checkouts || []).map(checkout => ({
+                        name: checkout.tool.name,
+                        category: checkout.tool.category || '',
+                        time: this.formatTime(checkout.checked_out_at),
+                    }));
                     this.showMessage(`Ouvrier : ${result.data.worker.first_name} ${result.data.worker.last_name}`, 'success');
+                    // Immediately open the camera to start scanning tools
+                    this.startCamera();
                 } else {
                     this.showMessage(result.message, 'error');
                     setTimeout(() => this.startCamera(), 2000);
@@ -281,92 +237,6 @@ function scannerApp() {
             }
         },
 
-        async loadWorkers() {
-            this.loadingWorkers = true;
-            try {
-                const response = await fetch('/api/scanner/workers');
-                const result = await response.json();
-                if (result.success) {
-                    this.workers = result.data;
-                }
-            } catch (error) {
-                console.error('Error loading workers:', error);
-            } finally {
-                this.loadingWorkers = false;
-            }
-        },
-
-        async searchWorkers() {
-            this.loadingWorkers = true;
-            try {
-                const response = await fetch(`/api/scanner/workers?search=${this.workerSearch}`);
-                const result = await response.json();
-                if (result.success) {
-                    this.workers = result.data;
-                }
-            } catch (error) {
-                console.error('Error searching workers:', error);
-            } finally {
-                this.loadingWorkers = false;
-            }
-        },
-
-        async selectWorker(worker) {
-            try {
-                const response = await fetch('/api/scanner/checkout', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Accept': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        tool_id: this.scannedTool.id,
-                        worker_id: worker.id
-                    })
-                });
-
-                const result = await response.json();
-
-                if (result.success) {
-                    this.showMessage('Outil prêté avec succès !', 'success');
-                    this.showWorkerSelection = false;
-                    setTimeout(() => this.reset(), 2000);
-                } else {
-                    this.showMessage(result.message, 'error');
-                }
-            } catch (error) {
-                this.showMessage('Erreur lors du prêt de l\'outil', 'error');
-            }
-        },
-
-        async returnTool() {
-            if (!confirm('Retourner cet outil ?')) return;
-
-            try {
-                const response = await fetch('/api/scanner/return', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Accept': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        checkout_id: this.currentCheckout.id
-                    })
-                });
-
-                const result = await response.json();
-
-                if (result.success) {
-                    this.showMessage('Outil retourné avec succès !', 'success');
-                    setTimeout(() => this.reset(), 2000);
-                } else {
-                    this.showMessage(result.message, 'error');
-                }
-            } catch (error) {
-                this.showMessage('Erreur lors du retour de l\'outil', 'error');
-            }
-        },
-
         async checkoutToolForWorker(tool) {
             if (!tool.is_available) {
                 this.showMessage('L\'outil n\'est pas disponible pour le prêt', 'error');
@@ -390,8 +260,13 @@ function scannerApp() {
                 const result = await response.json();
 
                 if (result.success) {
-                    this.showMessage('Outil prêté avec succès !', 'success');
-                    setTimeout(() => this.startCamera(), 2000);
+                    this.sessionTools.unshift({
+                        name: result.data.tool.name,
+                        category: tool.category || '',
+                        time: this.formatTime(result.data.checked_out_at),
+                    });
+                    this.showMessage(`Outil prêté : ${result.data.tool.name}`, 'success');
+                    setTimeout(() => this.startCamera(), 1500);
                 } else {
                     this.showMessage(result.message, 'error');
                     setTimeout(() => this.startCamera(), 2000);
@@ -402,18 +277,14 @@ function scannerApp() {
             }
         },
 
-        resetWorkerFirst() {
+        finishSession() {
             this.stopCamera();
+            const count = this.sessionTools.length;
             this.selectedWorker = null;
-            this.workerSearch = '';
-        },
-
-        reset() {
-            this.scannedTool = null;
-            this.currentCheckout = null;
-            this.showWorkerSelection = false;
-            this.workerSearch = '';
-            this.startCamera();
+            this.sessionTools = [];
+            if (count > 0) {
+                this.showMessage(`Session terminée — ${count} outil(s) prêté(s)`, 'info');
+            }
         },
 
         showMessage(text, type = 'info') {
@@ -423,19 +294,9 @@ function scannerApp() {
             }, 5000);
         },
 
-        statusLabel(status) {
-            const labels = {
-                'available': 'Disponible',
-                'checked_out': 'Emprunté',
-                'maintenance': 'En maintenance',
-                'retired': 'Retiré',
-            };
-            return labels[status] || status;
-        },
-
-        formatDate(dateString) {
-            if (!dateString) return 'N/A';
-            return new Date(dateString).toLocaleString();
+        formatTime(dateString) {
+            if (!dateString) return '';
+            return new Date(dateString).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
         }
     }
 }
