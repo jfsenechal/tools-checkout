@@ -9,10 +9,10 @@ use Filament\Actions\Testing\TestAction;
 
 use function Pest\Livewire\livewire;
 
-it('can create an API token for a user', function () {
+it('can create an API token and reveal it in a copyable modal', function () {
     $user = User::factory()->create();
 
-    livewire(TokensRelationManager::class, [
+    $component = livewire(TokensRelationManager::class, [
         'ownerRecord' => $user,
         'pageClass' => ViewUser::class,
     ])
@@ -21,9 +21,12 @@ it('can create an API token for a user', function () {
             'abilities' => ['*'],
         ])
         ->assertHasNoActionErrors()
-        ->assertNotified();
+        ->assertActionMounted('revealToken');
 
-    expect($user->tokens()->where('name', 'Scanner device')->exists())->toBeTrue();
+    $token = $user->tokens()->where('name', 'Scanner device')->first();
+
+    expect($token)->not->toBeNull();
+    expect($component->get('generatedToken'))->toContain((string) $token->getKey());
 });
 
 it('requires a name when creating a token', function () {

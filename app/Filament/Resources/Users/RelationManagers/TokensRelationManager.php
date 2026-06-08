@@ -6,21 +6,22 @@ namespace App\Filament\Resources\Users\RelationManagers;
 
 use App\Models\User;
 use BackedEnum;
+use Carbon\Carbon;
 use Filament\Actions\Action;
 use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\TagsInput;
 use Filament\Forms\Components\TextInput;
-use Filament\Notifications\Notification;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
-use Laravel\Sanctum\NewAccessToken;
 use Laravel\Sanctum\PersonalAccessToken;
 
 final class TokensRelationManager extends RelationManager
 {
+    public ?string $generatedToken = null;
+
     protected static string $relationship = 'tokens';
 
     protected static ?string $title = 'Jetons API';
@@ -87,10 +88,12 @@ final class TokensRelationManager extends RelationManager
                         $token = $user->createToken(
                             $data['name'],
                             $abilities,
-                            isset($data['expires_at']) ? \Carbon\Carbon::parse($data['expires_at']) : null,
+                            isset($data['expires_at']) ? Carbon::parse($data['expires_at']) : null,
                         );
 
-                        $this->notifyPlainTextToken($token);
+                        $this->generatedToken = $token->plainTextToken;
+
+                        $this->replaceMountedAction('revealToken');
                     }),
             ])
             ->recordActions([
@@ -103,13 +106,20 @@ final class TokensRelationManager extends RelationManager
             ]);
     }
 
-    private function notifyPlainTextToken(NewAccessToken $token): void
+    public function revealTokenAction(): Action
     {
-        Notification::make()
-            ->title('Jeton créé')
-            ->body('Copiez-le maintenant, il ne sera plus affiché : '.$token->plainTextToken)
-            ->success()
-            ->persistent()
-            ->send();
+        return Action::make('revealToken')
+            ->modalHeading('Jeton créé')
+            ->modalDescription('Copiez ce jeton maintenant : pour des raisons de sécurité, il ne sera plus affiché.')
+            ->modalIcon(Heroicon::Key)
+            ->schema([
+                TextInput::make('token')
+                    ->label('Jeton')
+                    ->readOnly()
+                    ->default(fn (): ?string => $this->generatedToken)
+                    ->copyable(copyMessage: 'Jeton copié', copyMessageDuration: 1500),
+            ])
+            ->modalSubmitAction(false)
+            ->modalCancelActionLabel('Fermer');
     }
 }
