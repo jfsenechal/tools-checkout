@@ -1222,10 +1222,10 @@
         },
         {
             "name": "filament/blueprint",
-            "version": "v2.1.2",
+            "version": "v2.2.0",
             "dist": {
                 "type": "zip",
-                "url": "https://packages.filamentphp.com/composer/10/552/download"
+                "url": "https://packages.filamentphp.com/composer/10/869/download"
             },
             "require": {
                 "filament/support": "^5.0",
