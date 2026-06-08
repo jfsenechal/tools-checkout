@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Filament\Pages\Auth;
 
-use App\Auth\LdapAuthService;
+use App\Auth\LdapAuthenticator;
 use DanHarrin\LivewireRateLimiting\Exceptions\TooManyRequestsException;
 use Filament\Auth\Http\Responses\Contracts\LoginResponse;
 use Filament\Auth\Pages\Login as BasePage;
@@ -51,7 +51,7 @@ final class Login extends BasePage
 
         $data = $this->form->getState();
 
-        if (! $user = app(LdapAuthService::class)->checkPassword($data['email'], $data['password'])) {
+        if (! $user = app(LdapAuthenticator::class)->checkPassword($data['email'], $data['password'])) {
             $this->throwFailureValidationException();
         } else {
             Filament::auth()->login($user, true);

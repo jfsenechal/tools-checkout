@@ -2,13 +2,13 @@
 
 declare(strict_types=1);
 
-use App\Auth\LdapAuthService;
+use App\Auth\LdapAuthenticator;
 use App\Models\User;
 
 it('returns a token and user info for valid credentials', function () {
     $user = User::factory()->create(['username' => 'jdoe']);
 
-    $this->mock(LdapAuthService::class)
+    $this->mock(LdapAuthenticator::class)
         ->shouldReceive('checkPassword')
         ->once()
         ->with('jdoe', 'secret-password')
@@ -34,7 +34,7 @@ it('returns a token and user info for valid credentials', function () {
 it('defaults the token name when no device name is given', function () {
     $user = User::factory()->create(['username' => 'jdoe']);
 
-    $this->mock(LdapAuthService::class)
+    $this->mock(LdapAuthenticator::class)
         ->shouldReceive('checkPassword')
         ->andReturn($user);
 
@@ -49,7 +49,7 @@ it('defaults the token name when no device name is given', function () {
 it('rejects invalid credentials', function () {
     $user = User::factory()->create(['username' => 'jdoe']);
 
-    $this->mock(LdapAuthService::class)
+    $this->mock(LdapAuthenticator::class)
         ->shouldReceive('checkPassword')
         ->andReturnNull();
 
@@ -83,7 +83,7 @@ it('returns the authenticated user from the token', function () {
 it('throttles repeated failed login attempts', function () {
     User::factory()->create(['username' => 'jdoe']);
 
-    $this->mock(LdapAuthService::class)
+    $this->mock(LdapAuthenticator::class)
         ->shouldReceive('checkPassword')
         ->andReturnNull();
 

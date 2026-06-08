@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Providers;
 
+use App\Auth\LdapAuthenticator;
+use App\Auth\LdapAuthService;
 use Filament\Forms\Components\Field;
 use Filament\Forms\Components\Placeholder;
 use Filament\Infolists\Components\Entry;
@@ -22,7 +24,7 @@ final class AppServiceProvider extends ServiceProvider
 {
     public function register(): void
     {
-        //
+        $this->app->bind(LdapAuthenticator::class, LdapAuthService::class);
     }
 
     public function boot(): void

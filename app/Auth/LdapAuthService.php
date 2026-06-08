@@ -8,7 +8,7 @@ use App\Ldap\UserLdap;
 use App\Models\User;
 use LdapRecord\Container;
 
-final class LdapAuthService
+final class LdapAuthService implements LdapAuthenticator
 {
     /**
      * @throws \LdapRecord\Auth\PasswordRequiredException

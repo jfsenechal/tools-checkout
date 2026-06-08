@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Api;
 
-use App\Auth\LdapAuthService;
+use App\Auth\LdapAuthenticator;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\LoginRequest;
 use App\Http\Resources\UserResource;
@@ -14,7 +14,7 @@ use Illuminate\Validation\ValidationException;
 
 final class AuthController extends Controller
 {
-    public function __construct(private readonly LdapAuthService $ldapAuth) {}
+    public function __construct(private readonly LdapAuthenticator $ldapAuth) {}
 
     /**
      * Authenticate a user with username and password (against LDAP) and issue an API token.
