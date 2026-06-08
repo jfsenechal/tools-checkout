@@ -2,12 +2,23 @@
 
 declare(strict_types=1);
 
+use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\CheckoutController;
 use App\Http\Controllers\Api\ScannerController;
 use App\Http\Controllers\Api\ToolController;
 use App\Http\Controllers\Api\WorkerController;
+use App\Http\Resources\UserResource;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+
+/*
+|--------------------------------------------------------------------------
+| Authentication (issue a bearer token from username + password)
+|--------------------------------------------------------------------------
+*/
+Route::post('/login', [AuthController::class, 'login'])
+    ->middleware('throttle:login')
+    ->name('api.login');
 
 /*
 |--------------------------------------------------------------------------
@@ -31,7 +42,8 @@ Route::prefix('scanner')->group(function () {
 | Send it as: Authorization: Bearer <token>
 */
 Route::middleware('auth:sanctum')->group(function () {
-    Route::get('/user', fn (Request $request) => $request->user())->name('api.user');
+    Route::get('/user', fn (Request $request) => new UserResource($request->user()))->name('api.user');
+    Route::post('/logout', [AuthController::class, 'logout'])->name('api.logout');
 
     // Read resources
     Route::get('/workers', [WorkerController::class, 'index'])->name('api.workers.index');
