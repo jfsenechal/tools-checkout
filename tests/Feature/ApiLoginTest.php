@@ -2,14 +2,17 @@
 
 declare(strict_types=1);
 
+use App\Auth\LdapAuthService;
 use App\Models\User;
-use Illuminate\Support\Facades\Hash;
 
 it('returns a token and user info for valid credentials', function () {
-    $user = User::factory()->create([
-        'username' => 'jdoe',
-        'password' => Hash::make('secret-password'),
-    ]);
+    $user = User::factory()->create(['username' => 'jdoe']);
+
+    $this->mock(LdapAuthService::class)
+        ->shouldReceive('checkPassword')
+        ->once()
+        ->with('jdoe', 'secret-password')
+        ->andReturn($user);
 
     $response = $this->postJson('/api/login', [
         'username' => 'jdoe',
@@ -29,10 +32,11 @@ it('returns a token and user info for valid credentials', function () {
 });
 
 it('defaults the token name when no device name is given', function () {
-    $user = User::factory()->create([
-        'username' => 'jdoe',
-        'password' => Hash::make('secret-password'),
-    ]);
+    $user = User::factory()->create(['username' => 'jdoe']);
+
+    $this->mock(LdapAuthService::class)
+        ->shouldReceive('checkPassword')
+        ->andReturn($user);
 
     $this->postJson('/api/login', [
         'username' => 'jdoe',
@@ -42,11 +46,12 @@ it('defaults the token name when no device name is given', function () {
     expect($user->tokens()->where('name', 'api')->exists())->toBeTrue();
 });
 
-it('rejects an invalid password', function () {
-    User::factory()->create([
-        'username' => 'jdoe',
-        'password' => Hash::make('secret-password'),
-    ]);
+it('rejects invalid credentials', function () {
+    $user = User::factory()->create(['username' => 'jdoe']);
+
+    $this->mock(LdapAuthService::class)
+        ->shouldReceive('checkPassword')
+        ->andReturnNull();
 
     $this->postJson('/api/login', [
         'username' => 'jdoe',
@@ -55,15 +60,7 @@ it('rejects an invalid password', function () {
         ->assertStatus(422)
         ->assertJsonValidationErrors('username');
 
-    expect(User::first()->tokens()->count())->toBe(0);
-});
-
-it('rejects an unknown username', function () {
-    $this->postJson('/api/login', [
-        'username' => 'ghost',
-        'password' => 'whatever',
-    ])->assertStatus(422)
-        ->assertJsonValidationErrors('username');
+    expect($user->tokens()->count())->toBe(0);
 });
 
 it('validates required fields', function () {
@@ -84,10 +81,11 @@ it('returns the authenticated user from the token', function () {
 });
 
 it('throttles repeated failed login attempts', function () {
-    User::factory()->create([
-        'username' => 'jdoe',
-        'password' => Hash::make('secret-password'),
-    ]);
+    User::factory()->create(['username' => 'jdoe']);
+
+    $this->mock(LdapAuthService::class)
+        ->shouldReceive('checkPassword')
+        ->andReturnNull();
 
     foreach (range(1, 5) as $attempt) {
         $this->postJson('/api/login', [
