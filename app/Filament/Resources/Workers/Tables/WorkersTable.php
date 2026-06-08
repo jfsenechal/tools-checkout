@@ -23,7 +23,7 @@ final class WorkersTable
     public static function configure(Table $table): Table
     {
         return $table
-            ->defaultPaginationPageOption(25)
+            ->defaultPaginationPageOption(50)
             ->columns([
                 Tables\Columns\TextColumn::make('last_name')
                     ->label('Nom')
