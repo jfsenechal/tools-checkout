@@ -51,7 +51,7 @@ final class Login extends BasePage
 
         $data = $this->form->getState();
 
-        if (! $user = LdapAuthService::checkPassword($data['email'], $data['password'])) {
+        if (! $user = app(LdapAuthService::class)->checkPassword($data['email'], $data['password'])) {
             $this->throwFailureValidationException();
         } else {
             Filament::auth()->login($user, true);

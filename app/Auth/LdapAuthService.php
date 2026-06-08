@@ -15,7 +15,7 @@ final class LdapAuthService
      * @throws \LdapRecord\Auth\UsernameRequiredException
      * @throws \LdapRecord\ContainerException
      */
-    public static function checkPassword(string $username, string $password): ?User
+    public function checkPassword(string $username, string $password): ?User
     {
         $user = User::where('username', '=', $username)->first();
         if (app()->environment('local')) {

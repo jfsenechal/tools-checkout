@@ -4,27 +4,29 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Api;
 
+use App\Auth\LdapAuthService;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\LoginRequest;
 use App\Http\Resources\UserResource;
-use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
 
 final class AuthController extends Controller
 {
+    public function __construct(private readonly LdapAuthService $ldapAuth) {}
+
     /**
-     * Authenticate a user with username and password and issue an API token.
+     * Authenticate a user with username and password (against LDAP) and issue an API token.
      */
     public function login(LoginRequest $request): JsonResponse
     {
-        $user = User::query()
-            ->where('username', $request->string('username'))
-            ->first();
+        $user = $this->ldapAuth->checkPassword(
+            $request->string('username')->toString(),
+            $request->string('password')->toString(),
+        );
 
-        if ($user === null || ! Hash::check($request->string('password')->toString(), $user->password)) {
+        if ($user === null) {
             throw ValidationException::withMessages([
                 'username' => [trans('auth.failed')],
             ]);
