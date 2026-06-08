@@ -1,0 +1,1630 @@
+ ▐▛███▜▌   Claude Code v2.1.162
+▝▜█████▛▘  Opus 4.8 · Claude Pro
+  ▘▘ ▝▝    /var/www/gstock
+
+  Feature of the week: /loop — run a prompt or slash command on a recurring interval
+
+
+❯ /doctor 
+  ⎿  Claude Code diagnostics dismissed
+
+❯ we will change the workflow scanner worker => tool                            
+  first scan a worker and then we can scan a tool, then an other, when until    
+  user stop it                                                                  
+
+● I'll explore the current scanner implementation to understand what needs to
+  change.
+
+  Read 3 files, listed 1 directory (ctrl+o to expand)
+
+● Now let me look at the scanner JavaScript that drives this.
+
+  Read 1 file (ctrl+o to expand)
+
+● I've reviewed the full setup. The worker→tool flow already partly exists:
+  worker-first.blade.php + scanner.js's handleWorkerQR / checkoutToolForWorker
+  already scan a worker, then loop scanning tools continuously (it restarts the
+  camera after each checkout).
+
+  What's missing to make it a polished "scan worker, then keep scanning tools
+  until you stop" workflow:
+  - The worker's session has no visible list of tools just checked out (the
+  camera just restarts with a toast).
+  - There's no explicit "Finish/Stop" affordance beyond the small "X".
+  - Worker→tool isn't the default mode.
+
+  Before I build, two scope decisions:
+
+● User answered Claude's questions:
+  ⎿  · How should the worker→tool flow relate to the existing tool→worker mode? 
+     → Make it the only flow
+     · After each tool is checked out, what should the screen show? → Running 
+     list of scanned tools
+
+  Read 1 file, listed 1 directory (ctrl+o to expand)
+
+● Backend endpoints already support everything (scan-worker, scan, checkout).
+  This is a frontend-only change. Let me rewrite the three files: remove
+  tool-first/mode-toggle, make worker→tool the only flow, and add a running
+  session list of checked-out tools with a Finish button.
+
+● Write(resources/views/scanner.blade.php)
+  ⎿  Removed 18 lines
+      50  
+      51      <main class="container mx-auto px-4 py-6 max-w-2xl">
+      52  
+      53 -        <!-- Mode Toggle -->                                   
+      54 -        <div class="bg-white rounded-lg shadow-lg p-2 mb-6 flex
+         -">                                                             
+      55 -            <button                                            
+      56 -                @click="switchMode('tool-first')"              
+      57 -                class="flex-1 py-3 px-4 rounded-lg font-semibol
+         -d text-center transition"                                      
+      58 -                :class="mode === 'tool-first' ? 'bg-blue-600 te
+         -xt-white' : 'text-gray-600 hover:bg-gray-100'">                
+      59 -                Outil &rarr; Ouvrier                           
+      60 -            </button>                                          
+      61 -            <button                                            
+      62 -                @click="switchMode('worker-first')"            
+      63 -                class="flex-1 py-3 px-4 rounded-lg font-semibol
+         -d text-center transition"                                      
+      64 -                :class="mode === 'worker-first' ? 'bg-blue-600 
+         -text-white' : 'text-gray-600 hover:bg-gray-100'">              
+      65 -                Ouvrier &rarr; Outil                           
+      66 -            </button>                                          
+      67 -        </div>                                                 
+      68 -                                                               
+      69 -        @include('scanner.tool-first')                         
+      70 -                                                               
+      53          @include('scanner.worker-first')
+      54  
+      55          <!-- Success/Error Messages -->
+
+● Now the worker-first view — remove mode guards, add the running session list
+  and a Finish button:
+
+● Write(resources/views/scanner/worker-first.blade.php)
+  ⎿  Added 42 lines, removed 4 lines
+      1  <!-- Step 1: Scan Worker QR Code -->
+      2 -<div x-show="mode === 'worker-first' && !selectedWorker" class="
+        -bg-white rounded-lg shadow-lg p-6 mb-6">                        
+      2 +<div x-show="!selectedWorker" class="bg-white rounded-lg shadow-
+        +lg p-6 mb-6">                                                   
+      3      <h2 class="text-xl font-semibold mb-4 text-gray-800">Scanner
+          le code QR de l'ouvrier</h2>
+      4  
+      5      <!-- Camera View -->
+     ...
+      45      </div>
+      46  </div>
+      47  
+      48 -<!-- Step 2: Worker identified — show info + scan tool -->     
+      49 -<div x-show="mode === 'worker-first' && selectedWorker" x-cloak
+         - class="space-y-6">                                            
+      48 +<!-- Step 2: Worker identified — show info + scan tools in a lo
+         +op -->                                                         
+      49 +<div x-show="selectedWorker" x-cloak class="space-y-6">        
+      50      <!-- Selected Worker Card -->
+      51      <div class="bg-white rounded-lg shadow-lg p-6">
+      52          <div class="flex justify-between items-start mb-4">
+      53              <h2 class="text-xl font-semibold text-gray-800">Ouv
+          rier</h2>
+      54 -            <button @click="resetWorkerFirst()" class="text-gra
+         -y-500 hover:text-gray-700">                                    
+      54 +            <button @click="finishSession()" class="text-gray-5
+         +00 hover:text-gray-700" title="Terminer">                      
+      55                  <svg class="w-6 h-6" fill="none" stroke="curren
+          tColor" viewBox="0 0 24 24">
+      56                      <path stroke-linecap="round" stroke-linejoi
+          n="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+      57                  </svg>
+     ...
+      107              <p class="text-green-800 text-center font-semibold
+           ">Code QR détecté — appuyez sur l'écran pour confirmer</p>
+      108          </div>
+      109      </div>
+      110 +                                                              
+      111 +    <!-- Running list of tools checked out in this session -->
+      112 +    <div class="bg-white rounded-lg shadow-lg p-6">           
+      113 +        <div class="flex items-center justify-between mb-4">  
+      114 +            <h3 class="text-lg font-semibold text-gray-800">Ou
+          +tils prêtés</h3>                                              
+      115 +            <span                                             
+      116 +                class="inline-flex items-center justify-center
+          + min-w-7 h-7 px-2 rounded-full bg-blue-100 text-blue-800 text-
+          +sm font-semibold"                                             
+      117 +                x-text="sessionTools.length"></span>          
+      118 +        </div>                                                
+      119 +                                                              
+      120 +        <p x-show="sessionTools.length === 0" class="text-gray
+          +-500 text-sm text-center py-4">                               
+      121 +            Aucun outil prêté pour le moment. Scannez un outil
+          + pour commencer.                                              
+      122 +        </p>                                                  
+      123 +                                                              
+      124 +        <ul x-show="sessionTools.length > 0" class="divide-y d
+          +ivide-gray-100">                                              
+      125 +            <template x-for="(item, index) in sessionTools" :k
+          +ey="index">                                                   
+      126 +                <li class="flex items-center gap-3 py-3">     
+      127 +                    <span class="flex-shrink-0 w-9 h-9 rounded
+          +-full bg-green-100 text-green-700 flex items-center justify-ce
+          +nter">                                                        
+      128 +                        <svg class="w-5 h-5" fill="none" strok
+          +e="currentColor" viewBox="0 0 24 24">                         
+      129 +                            <path stroke-linecap="round" strok
+          +e-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+      130 +                        </svg>                                
+      131 +                    </span>                                   
+      132 +                    <div class="flex-1 min-w-0">              
+      133 +                        <p class="font-medium text-gray-800 tr
+          +uncate" x-text="item.name"></p>                               
+      134 +                        <p class="text-xs text-gray-500" x-tex
+          +t="item.category"></p>                                        
+      135 +                    </div>                                    
+      136 +                    <span class="text-xs text-gray-400 flex-sh
+          +rink-0" x-text="item.time"></span>                            
+      137 +                </li>                                         
+      138 +            </template>                                       
+      139 +        </ul>                                                 
+      140 +    </div>                                                    
+      141 +                                                              
+      142 +    <!-- Finish session -->                                   
+      143 +    <button                                                   
+      144 +        @click="finishSession()"                              
+      145 +        class="w-full bg-gray-800 text-white px-6 py-4 rounded
+          +-lg font-semibold hover:bg-gray-900 transition">              
+      146 +        Terminer                                              
+      147 +    </button>                                                 
+      148  </div>
+  ⎿  Found 13 new diagnostic issues in 1 file (ctrl+o to expand)
+
+● The diagnostics are just the editor not understanding Alpine x-for / methods
+  defined in scanner.js — benign. Now rewrite scanner.js for the
+  worker-first-only flow with the session list:
+
+● Write(public/js/scanner.js)
+  ⎿  Added 32 lines, removed 171 lines
+       1  function scannerApp() {
+       2      return {
+       3 -        mode: 'tool-first',                                    
+       3          cameraActive: false,
+       4          scanning: false,
+       6 -        scannedTool: null,                                     
+       7 -        currentCheckout: null,                                 
+       8 -        showWorkerSelection: false,                            
+       5          selectedWorker: null,
+      10 -        workers: [],                                           
+      11 -        workerSearch: '',                                      
+      12 -        loadingWorkers: false,                                 
+       6 +        sessionTools: [],                                      
+       7          message: { text: '', type: '' },
+       8          video: null,
+       9          canvas: null,
+     ...
+      23                      .then(() => console.log('Service worker reg
+          istered'))
+      24                      .catch(err => console.log('Service worker r
+          egistration failed:', err));
+      25              }
+      32 -                                                               
+      33 -            // Load workers on init                            
+      34 -            this.loadWorkers();                                
+      26          },
+      27  
+      28          initCameraElements() {
+      38 -            if (this.mode === 'worker-first' && this.selectedWo
+         -rker) {                                                        
+      29 +            if (this.selectedWorker) {                         
+      30                  this.video = document.getElementById('video-too
+          l-wf');
+      31                  this.canvas = document.getElementById('canvas-t
+          ool-wf');
+      41 -            } else if (this.mode === 'worker-first') {         
+      32 +            } else {                                           
+      33                  this.video = document.getElementById('video-wor
+          ker');
+      34                  this.canvas = document.getElementById('canvas-w
+          orker');
+      44 -            } else {                                           
+      45 -                this.video = document.getElementById('video'); 
+      46 -                this.canvas = document.getElementById('canvas')
+         -;                                                              
+      35              }
+      36              if (this.canvas) {
+      37                  this.canvasContext = this.canvas.getContext('2d
+          ');
+      38              }
+      39          },
+      40  
+      53 -        switchMode(newMode) {                                  
+      54 -            if (this.mode === newMode) return;                 
+      55 -            this.stopCamera();                                 
+      56 -            this.mode = newMode;                               
+      57 -            this.scannedTool = null;                           
+      58 -            this.currentCheckout = null;                       
+      59 -            this.showWorkerSelection = false;                  
+      60 -            this.selectedWorker = null;                        
+      61 -            this.workerSearch = '';                            
+      62 -            this.loadWorkers();                                
+      63 -        },                                                     
+      64 -                                                               
+      41          async startCamera() {
+      42              this.cameraActive = true;
+      43              this.scanning = true;
+     ...
+       70          },
+       71  
+       72          stopCamera() {
+       97 -            if (this.video.srcObject) {                       
+       73 +            if (this.video && this.video.srcObject) {         
+       74                  this.video.srcObject.getTracks().forEach(track
+            => track.stop());
+       75              }
+       76              this.cameraActive = false;
+     ...
+      168              this.stopCamera();
+      169              this.scanning = false;
+      170  
+      195 -            // Worker-first mode: step 1 — scan worker QR     
+      196 -            if (this.mode === 'worker-first' && !this.selected
+          -Worker) {                                                     
+      171 +            // Step 1 — scan worker QR                        
+      172 +            if (!this.selectedWorker) {                       
+      173                  await this.handleWorkerQR(qrData);
+      174                  return;
+      175              }
+      176  
+      201 -            // Worker-first mode: step 2 — scan tool QR for ch
+          -eckout                                                        
+      202 -            if (this.mode === 'worker-first' && this.selectedW
+          -orker) {                                                      
+      203 -                await this.handleToolQRForWorker(qrData);     
+      204 -                return;                                       
+      205 -            }                                                 
+      206 -                                                              
+      207 -            // Tool-first mode: scan tool QR                  
+      208 -            try {                                             
+      209 -                const response = await fetch('/api/scanner/sca
+          -n', {                                                         
+      210 -                    method: 'POST',                           
+      211 -                    headers: {                                
+      212 -                        'Content-Type': 'application/json',   
+      213 -                        'Accept': 'application/json'          
+      214 -                    },                                        
+      215 -                    body: JSON.stringify({ qr_data: qrData }) 
+      216 -                });                                           
+      217 -                                                              
+      218 -                const result = await response.json();         
+      219 -                                                              
+      220 -                if (result.success) {                         
+      221 -                    this.scannedTool = result.data.tool;      
+      222 -                    this.currentCheckout = result.data.current
+          -_checkout;                                                    
+      223 -                } else {                                      
+      224 -                    this.showMessage(result.message, 'error');
+      225 -                    setTimeout(() => this.startCamera(), 2000)
+          -;                                                             
+      226 -                }                                             
+      227 -            } catch (error) {                                 
+      228 -                this.showMessage('Erreur lors du scan du code 
+          -QR', 'error');                                                
+      229 -                setTimeout(() => this.startCamera(), 2000);   
+      230 -            }                                                 
+      177 +            // Step 2 — scan tool QR for checkout (loops until
+          + session is finished)                                         
+      178 +            await this.handleToolQRForWorker(qrData);         
+      179          },
+      180  
+      181          async handleWorkerQR(qrData) {
+     ...
+      193  
+      194                  if (result.success) {
+      195                      this.selectedWorker = result.data.worker;
+      196 +                    // Seed the session list with the tools th
+          +e worker already holds                                        
+      197 +                    this.sessionTools = (result.data.checkouts
+          + || []).map(checkout => ({                                    
+      198 +                        name: checkout.tool.name,             
+      199 +                        category: checkout.tool.category || ''
+          +,                                                             
+      200 +                        time: this.formatTime(checkout.checked
+          +_out_at),                                                     
+      201 +                    }));                                      
+      202                      this.showMessage(`Ouvrier : ${result.data.
+           worker.first_name} ${result.data.worker.last_name}`, 'success'
+           );
+      203 +                    // Immediately open the camera to start sc
+          +anning tools                                                  
+      204 +                    this.startCamera();                       
+      205                  } else {
+      206                      this.showMessage(result.message, 'error');
+      207                      setTimeout(() => this.startCamera(), 2000)
+           ;
+     ...
+      237              }
+      238          },
+      239  
+      284 -        async loadWorkers() {                                 
+      285 -            this.loadingWorkers = true;                       
+      286 -            try {                                             
+      287 -                const response = await fetch('/api/scanner/wor
+          -kers');                                                       
+      288 -                const result = await response.json();         
+      289 -                if (result.success) {                         
+      290 -                    this.workers = result.data;               
+      291 -                }                                             
+      292 -            } catch (error) {                                 
+      293 -                console.error('Error loading workers:', error)
+          -;                                                             
+      294 -            } finally {                                       
+      295 -                this.loadingWorkers = false;                  
+      296 -            }                                                 
+      297 -        },                                                    
+      298 -                                                              
+      299 -        async searchWorkers() {                               
+      300 -            this.loadingWorkers = true;                       
+      301 -            try {                                             
+      302 -                const response = await fetch(`/api/scanner/wor
+          -kers?search=${this.workerSearch}`);                           
+      303 -                const result = await response.json();         
+      304 -                if (result.success) {                         
+      305 -                    this.workers = result.data;               
+      306 -                }                                             
+      307 -            } catch (error) {                                 
+      308 -                console.error('Error searching workers:', erro
+          -r);                                                           
+      309 -            } finally {                                       
+      310 -                this.loadingWorkers = false;                  
+      311 -            }                                                 
+      312 -        },                                                    
+      313 -                                                              
+      314 -        async selectWorker(worker) {                          
+      315 -            try {                                             
+      316 -                const response = await fetch('/api/scanner/che
+          -ckout', {                                                     
+      317 -                    method: 'POST',                           
+      318 -                    headers: {                                
+      319 -                        'Content-Type': 'application/json',   
+      320 -                        'Accept': 'application/json'          
+      321 -                    },                                        
+      322 -                    body: JSON.stringify({                    
+      323 -                        tool_id: this.scannedTool.id,         
+      324 -                        worker_id: worker.id                  
+      325 -                    })                                        
+      326 -                });                                           
+      327 -                                                              
+      328 -                const result = await response.json();         
+      329 -                                                              
+      330 -                if (result.success) {                         
+      331 -                    this.showMessage('Outil prêté avec succès 
+          -!', 'success');                                               
+      332 -                    this.showWorkerSelection = false;         
+      333 -                    setTimeout(() => this.reset(), 2000);     
+      334 -                } else {                                      
+      335 -                    this.showMessage(result.message, 'error');
+      336 -                }                                             
+      337 -            } catch (error) {                                 
+      338 -                this.showMessage('Erreur lors du prêt de l\'ou
+          -til', 'error');                                               
+      339 -            }                                                 
+      340 -        },                                                    
+      341 -                                                              
+      342 -        async returnTool() {                                  
+      343 -            if (!confirm('Retourner cet outil ?')) return;    
+      344 -                                                              
+      345 -            try {                                             
+      346 -                const response = await fetch('/api/scanner/ret
+          -urn', {                                                       
+      347 -                    method: 'POST',                           
+      348 -                    headers: {                                
+      349 -                        'Content-Type': 'application/json',   
+      350 -                        'Accept': 'application/json'          
+      351 -                    },                                        
+      352 -                    body: JSON.stringify({                    
+      353 -                        checkout_id: this.currentCheckout.id  
+      354 -                    })                                        
+      355 -                });                                           
+      356 -                                                              
+      357 -                const result = await response.json();         
+      358 -                                                              
+      359 -                if (result.success) {                         
+      360 -                    this.showMessage('Outil retourné avec succ
+          -ès !', 'success');                                            
+      361 -                    setTimeout(() => this.reset(), 2000);     
+      362 -                } else {                                      
+      363 -                    this.showMessage(result.message, 'error');
+      364 -                }                                             
+      365 -            } catch (error) {                                 
+      366 -                this.showMessage('Erreur lors du retour de l\'
+          -outil', 'error');                                             
+      367 -            }                                                 
+      368 -        },                                                    
+      369 -                                                              
+      240          async checkoutToolForWorker(tool) {
+      241              if (!tool.is_available) {
+      242                  this.showMessage('L\'outil n\'est pas disponib
+           le pour le prêt', 'error');
+     ...
+      260                  const result = await response.json();
+      261  
+      262                  if (result.success) {
+      393 -                    this.showMessage('Outil prêté avec succès 
+          -!', 'success');                                               
+      394 -                    setTimeout(() => this.startCamera(), 2000)
+          -;                                                             
+      263 +                    this.sessionTools.unshift({               
+      264 +                        name: result.data.tool.name,          
+      265 +                        category: tool.category || '',        
+      266 +                        time: this.formatTime(result.data.chec
+          +ked_out_at),                                                  
+      267 +                    });                                       
+      268 +                    this.showMessage(`Outil prêté : ${result.d
+          +ata.tool.name}`, 'success');                                  
+      269 +                    setTimeout(() => this.startCamera(), 1500)
+          +;                                                             
+      270                  } else {
+      271                      this.showMessage(result.message, 'error');
+      272                      setTimeout(() => this.startCamera(), 2000)
+           ;
+     ...
+      277              }
+      278          },
+      279  
+      405 -        resetWorkerFirst() {                                  
+      280 +        finishSession() {                                     
+      281              this.stopCamera();
+      282 +            const count = this.sessionTools.length;           
+      283              this.selectedWorker = null;
+      408 -            this.workerSearch = '';                           
+      284 +            this.sessionTools = [];                           
+      285 +            if (count > 0) {                                  
+      286 +                this.showMessage(`Session terminée — ${count} 
+          +outil(s) prêté(s)`, 'info');                                  
+      287 +            }                                                 
+      288          },
+      289  
+      411 -        reset() {                                             
+      412 -            this.scannedTool = null;                          
+      413 -            this.currentCheckout = null;                      
+      414 -            this.showWorkerSelection = false;                 
+      415 -            this.workerSearch = '';                           
+      416 -            this.startCamera();                               
+      417 -        },                                                    
+      418 -                                                              
+      290          showMessage(text, type = 'info') {
+      291              this.message = { text, type };
+      292              setTimeout(() => {
+     ...
+      294              }, 5000);
+      295          },
+      296  
+      426 -        statusLabel(status) {                                 
+      427 -            const labels = {                                  
+      428 -                'available': 'Disponible',                    
+      429 -                'checked_out': 'Emprunté',                    
+      430 -                'maintenance': 'En maintenance',              
+      431 -                'retired': 'Retiré',                          
+      432 -            };                                                
+      433 -            return labels[status] || status;                  
+      434 -        },                                                    
+      435 -                                                              
+      436 -        formatDate(dateString) {                              
+      437 -            if (!dateString) return 'N/A';                    
+      438 -            return new Date(dateString).toLocaleString();     
+      297 +        formatTime(dateString) {                              
+      298 +            if (!dateString) return '';                       
+      299 +            return new Date(dateString).toLocaleTimeString([],
+          + { hour: '2-digit', minute: '2-digit' });                     
+      300          }
+      301      }
+      302  }
+
+● Now remove the now-unused tool-first.blade.php, and verify nothing else
+  references the removed methods/routes:
+
+  Ran 1 shell command (ctrl+o to expand)
+
+● Clean. Now let me run the scanner tests to confirm the backend (which I didn't
+  touch) is still green:
+
+  Read 1 file, ran 4 shell commands (ctrl+o to expand)
+
+● I'll wait for the background test runs to report back.
+
+  Read 1 file, ran 1 shell command (ctrl+o to expand)
+
+● These failures are pre-existing and unrelated to my frontend change — the test
+  SQLite schema has no status column on workers, while the tests insert
+  'status' => .... I didn't touch the backend, models, or migrations. Let me
+  confirm:
+  Ran 1 shell command (ctrl+o to expand)
+
+● Done. My changes are frontend-only (3 blade/JS files); no PHP, models, or
+  migrations were touched.
+
+  The 4 failing scanner tests are pre-existing and unrelated — they fail because
+  the test inserts 'status' => ... into workers, but no migration adds a status
+  column to that table (SQLSTATE… table workers has no column named status).
+  That's a test/schema bug that exists independent of this work; the one test
+  that doesn't set status passes.
+
+  What changed
+
+  Workflow is now worker → tool only, looping until you stop:
+
+  1. resources/views/scanner.blade.php — removed the mode toggle and the
+  tool-first include. The page now goes straight into the worker-first flow.
+  2. resources/views/scanner/tool-first.blade.php — deleted (mode removed).
+  3. resources/views/scanner/worker-first.blade.php — dropped the mode ===
+  guards; added a running list of tools checked out this session (with a count
+  badge and timestamps) and a prominent "Terminer" button.
+  4. public/js/scanner.js — rewritten as a single worker-first flow:
+    - Scan worker → selectedWorker set, camera auto-reopens for tools, and the
+  list is seeded with tools the worker already holds.
+    - Scan tool → identify + checkout → tool prepended to sessionTools → camera
+  restarts automatically for the next one.
+    - finishSession() (the "Terminer" button and the ✕) clears the worker + list
+  and returns to the worker-scan screen.
+    - Removed all unused tool-first code (switchMode, selectWorker, returnTool,
+  worker-search, etc.).
+
+  The unused return / workerTools controller endpoints were left in place (still
+  routed and tested).
+
+  To see it
+
+  scanner.js is served directly from /public, but the new list uses Tailwind
+  classes that the CSS bundle must pick up — run npm run build (or npm run dev /
+  composer run dev) so the new utility classes are generated.
+
+  One note: after a worker is scanned the camera auto-starts for tool scanning.
+  If you'd rather require a tap on "Scanner l'outil" first, say so and I'll
+  remove the auto-start.
+
+✻ Brewed for 10m 20s
+
+❯ npm run build                                                                 
+
+  Ran 1 shell command (ctrl+o to expand)
+
+● Build succeeded. The CSS bundle (app-DQ0rvri2.css) now includes the Tailwind
+  classes used by the new session-tools list, so the worker→tool scanner UI will
+  render correctly.
+
+  You can test the flow at /scanner: scan a worker → camera auto-opens for tools
+  → each scanned tool is checked out and added to the running list → Terminer
+  to end the session.
+
+✻ Cogitated for 7s
+
+❯ when scan a tool this error the attribute is_active either does not exist or  
+  was not retrieved for model                                                   
+
+  Searched for 1 pattern, read 1 file (ctrl+o to expand)
+
+● The error is from the checkout step — CheckoutToolAction reads
+  $worker->is_active. Let me check the Worker model:
+
+  Read 2 files, ran 1 shell command (ctrl+o to expand)
+
+● The workers table has a status enum, but the Worker model lost its is_active
+  accessor (and status cast). CheckoutToolAction calls $worker->is_active, which
+  throws under strict attribute mode. Let me check for an existing status enum
+  and how scanWorker filters:
+
+  Searched for 1 pattern, listed 1 directory, ran 1 shell command (ctrl+o to expand)
+
+● No migration actually creates the workers.status column (production has it,
+  but the migration set doesn't), and the Worker model is missing the is_active
+  accessor that CheckoutToolAction calls. Let me check git history for what the
+  model previously had:
+
+  Ran 2 shell commands (ctrl+o to expand)
+
+● Commit 1680626 accidentally dropped status from fillable plus the scopeActive
+  and getIsActiveAttribute accessor from Worker, while the DB column, factory,
+  and CheckoutToolAction still rely on them. Let me see exactly what was
+  removed:
+
+  Ran 2 shell commands (ctrl+o to expand)
+
+● Now I'll restore status to fillable plus the scopeActive scope and is_active
+  accessor on the Worker model:
+
+● Update(app/Models/Worker.php)
+  ⎿  Added 1 line
+      24          'qr_code',
+      25          'email',
+      26          'phone',
+      27 +        'status',                                              
+      28          'tag_id',
+      29          'notes',
+      30      ];
+
+● Update(app/Models/Worker.php)
+  ⎿  Added 6 lines
+      37              ->dontSubmitEmptyLogs();
+      38      }
+      39  
+      40 +    // Scopes                                                  
+      41 +    public function scopeActive($query)                        
+      42 +    {                                                          
+      43 +        return $query->where('status', 'active');              
+      44 +    }                                                          
+      45 +                                                               
+      46      // Relationships
+      47      public function tag(): BelongsTo
+      48      {
+
+● Update(app/Models/Worker.php)
+  ⎿  Added 5 lines
+      61      }
+      62  
+      63      // Accessors
+      64 +    public function getIsActiveAttribute(): bool               
+      65 +    {                                                          
+      66 +        return $this->status === 'active';                     
+      67 +    }                                                          
+      68 +                                                               
+      69      public function getQrCodeUrlAttribute(): string
+      70      {
+      71          return $this->qr_code
+
+● Now update scanWorker to only resolve active workers (so an inactive worker is
+  rejected rather than failing later at checkout):
+
+● Update(app/Http/Controllers/Api/ScannerController.php)
+  ⎿  Added 1 line, removed 1 line
+      116                  ], 400);
+      117              }
+      118  
+      119 -            $worker = Worker::find($qrData['id']);            
+      119 +            $worker = Worker::active()->find($qrData['id']);  
+      120  
+      121              if (! $worker) {
+      122                  return response()->json([
+
+● Now the missing migration — production has workers.status but no migration
+  creates it, so the test DB lacks it. Add an idempotent migration:
+
+  Ran 1 shell command (ctrl+o to expand)
+
+● Write(database/migrations/2026_06_08_095903_add_status_to_workers_table.php)  ⎿  Error writing file
+
+  Read 1 file (ctrl+o to expand)
+
+● Write(database/migrations/2026_06_08_095903_add_status_to_workers_table.php)
+  ⎿  Added 20 lines, removed 2 lines
+       6  use Illuminate\Database\Schema\Blueprint;
+       7  use Illuminate\Support\Facades\Schema;
+       8  
+       9 -return new class() extends Migration                           
+       9 +return new class extends Migration                             
+      10  {
+      11      public function up(): void
+      12      {
+      13 +        if (Schema::hasColumn('workers', 'status')) {          
+      14 +            return;                                            
+      15 +        }                                                      
+      16 +                                                               
+      17          Schema::table('workers', function (Blueprint $table) {
+      14 -            //                                                 
+      18 +            $table->enum('status', ['active', 'inactive', 'susp
+         +ended'])                                                       
+      19 +                ->default('active')                            
+      20 +                ->index()                                      
+      21 +                ->after('phone');                              
+      22          });
+      23      }
+      24 +                                                               
+      25 +    public function down(): void                               
+      26 +    {                                                          
+      27 +        if (! Schema::hasColumn('workers', 'status')) {        
+      28 +            return;                                            
+      29 +        }                                                      
+      30 +                                                               
+      31 +        Schema::table('workers', function (Blueprint $table) { 
+      32 +            $table->dropColumn('status');                      
+      33 +        });                                                    
+      34 +    }                                                          
+      35  };
+
+● Now run Pint on changed PHP, then the scanner tests:
+
+  Ran 2 shell commands (ctrl+o to expand)
+
+● All 5 scanner tests pass now (previously 4 failed). Let me run the migration
+  on the dev DB and the full suite to confirm nothing else regressed:
+
+  Ran 3 shell commands (ctrl+o to expand)
+
+● The 5 remaining failures are all auth/browser-related (Playwright
+  PlaywrightOutdatedException and a Filament login test) — none touch Worker,
+  Tool, checkout, or the scanner. Let me confirm the login one is pre-existing
+  and not caused by my change:
+
+  Ran 1 shell command (ctrl+o to expand)
+
+● Confirmed pre-existing — those auth/browser failures happen with my changes
+  stashed too (Playwright environment + an unrelated login test). My work is
+  complete.
+
+  Root cause
+
+  Commit 1680626 ("split name into first_name/last_name, remove unused fields")
+  accidentally stripped the worker status handling, but the DB column, factory,
+  and CheckoutToolAction still depended on it. So scanning a tool → checkout →
+  $worker->is_active threw "the attribute is_active either does not exist or was
+  not retrieved" under strict attribute mode.
+
+  Fix
+
+  - app/Models/Worker.php — restored status in $fillable, the scopeActive()
+  scope, and the getIsActiveAttribute() accessor (status === 'active').
+  - app/Http/Controllers/Api/ScannerController.php — scanWorker now resolves via
+  Worker::active()->find(), so an inactive worker is rejected up front (404)
+  instead of failing at checkout.
+  - database/migrations/2026_06_08_095903_add_status_to_workers_table.php —
+  added the missing migration that creates workers.status (the column existed in
+  production but no migration created it, so the test DB lacked it). Idempotent
+  via Schema::hasColumn guards, safe to run against the existing production DB.
+
+  Verification
+
+  - Scanner tests: 5/5 pass (were 4 failing before).
+  - Full suite: 54 pass; the only 5 failures are pre-existing
+  auth/Playwright-browser tests unrelated to this change (verified by re-running
+  with my changes stashed).
+  - Pint clean. Migration ran cleanly on the dev DB (no-op since the column
+  already existed).
+
+  Scanning a tool now checks the worker out correctly and adds it to the session
+  list.
+
+✻ Sautéed for 5m 22s
+
+❯ now create a api protect by a token bearer                                    
+  this can fetch workers,tools and all checkouts                                
+  and it can use the workflow scanner                                           
+  it is a token by user                                                         
+
+● I'll plan this. Let me first check what's already in place — auth, Sanctum,
+  the User model, and existing API structure.
+
+  Ran 1 shell command (ctrl+o to expand)
+
+● Sanctum isn't installed yet. Let me confirm and check the available install
+  command + DB tables:
+
+  Ran 1 shell command (ctrl+o to expand)
+
+● Sanctum is already installed and the personal_access_tokens table exists. Let
+  me verify the config and whether the User model has the trait:
+
+  Ran 1 shell command (ctrl+o to expand)
+
+● Sanctum's vendor dir, config, and api guard are missing — it's not actually
+  installed (the personal_access_tokens table belongs to a different DB sharing
+  the server). Let me install it properly:
+
+  Ran 1 shell command (ctrl+o to expand)
+
+● Sanctum installed and migrated. Now add the HasApiTokens trait to the User
+  model:
+
+● Update(app/Models/User.php)
+  ⎿  File must be read first
+
+  Read 1 file (ctrl+o to expand)
+
+● Update(app/Models/User.php)
+  ⎿  Added 1 line
+      16  use Illuminate\Database\Eloquent\Factories\HasFactory;
+      17  use Illuminate\Foundation\Auth\User as Authenticatable;
+      18  use Illuminate\Notifications\Notifiable;
+      19 +use Laravel\Sanctum\HasApiTokens;                              
+      20  use LdapRecord\Models\Model;
+      21  
+      22  #[UseFactory(UserFactory::class)]
+
+● Update(app/Models/User.php)
+  ⎿  Added 1 line, removed 1 line
+      22  #[UseFactory(UserFactory::class)]
+      23  final class User extends Authenticatable implements FilamentUse
+          r, HasAppAuthentication, HasAppAuthenticationRecovery, HasName
+      24  {
+      25 -    use HasFactory, Notifiable;                                
+      25 +    use HasApiTokens, HasFactory, Notifiable;                  
+      26  
+      27      protected $fillable = [
+      28          'email',
+
+● Now let me look at the Checkout model to build the resources correctly:
+  Read 1 file (ctrl+o to expand)
+
+● Now I'll scaffold the API resources, controllers, and a token command:
+
+  Ran 1 shell command (ctrl+o to expand)
+
+● Now write the resources:
+
+● Write(app/Http/Resources/WorkerResource.php)
+  ⎿  Error writing file
+
+  Read 1 file (ctrl+o to expand)
+
+● Write(app/Http/Resources/WorkerResource.php)
+  ⎿  Added 18 lines, removed 2 lines
+       1  <?php
+       2  
+       3 +declare(strict_types=1);                                       
+       4 +                                                               
+       5  namespace App\Http\Resources;
+       6  
+       7 +use App\Models\Worker;                                         
+       8  use Illuminate\Http\Request;
+       9  use Illuminate\Http\Resources\Json\JsonResource;
+      10  
+       8 -class WorkerResource extends JsonResource                      
+      11 +/**                                                            
+      12 + * @mixin Worker                                               
+      13 + */                                                            
+      14 +final class WorkerResource extends JsonResource                
+      15  {
+      16      /**
+      17       * Transform the resource into an array.
+     ...
+      20       */
+      21      public function toArray(Request $request): array
+      22      {
+      17 -        return parent::toArray($request);                      
+      23 +        return [                                               
+      24 +            'id' => $this->id,                                 
+      25 +            'first_name' => $this->first_name,                 
+      26 +            'last_name' => $this->last_name,                   
+      27 +            'email' => $this->email,                           
+      28 +            'phone' => $this->phone,                           
+      29 +            'status' => $this->status,                         
+      30 +            'is_active' => $this->is_active,                   
+      31 +            'active_checkouts_count' => $this->whenCounted('act
+         +iveCheckouts'),                                                
+      32 +            'created_at' => $this->created_at?->toIso8601String
+         +(),                                                            
+      33 +        ];                                                     
+      34      }
+      35  }
+
+  Read 1 file (ctrl+o to expand)
+
+● Write(app/Http/Resources/ToolResource.php)
+  ⎿  Added 22 lines, removed 2 lines
+       1  <?php
+       2  
+       3 +declare(strict_types=1);                                       
+       4 +                                                               
+       5  namespace App\Http\Resources;
+       6  
+       7 +use App\Models\Tool;                                           
+       8  use Illuminate\Http\Request;
+       9  use Illuminate\Http\Resources\Json\JsonResource;
+      10  
+       8 -class ToolResource extends JsonResource                        
+      11 +/**                                                            
+      12 + * @mixin Tool                                                 
+      13 + */                                                            
+      14 +final class ToolResource extends JsonResource                  
+      15  {
+      16      /**
+      17       * Transform the resource into an array.
+     ...
+      20       */
+      21      public function toArray(Request $request): array
+      22      {
+      17 -        return parent::toArray($request);                      
+      23 +        return [                                               
+      24 +            'id' => $this->id,                                 
+      25 +            'name' => $this->name,                             
+      26 +            'description' => $this->description,               
+      27 +            'manufacturer' => $this->manufacturer,             
+      28 +            'model' => $this->model,                           
+      29 +            'status' => $this->status,                         
+      30 +            'is_available' => $this->is_available,             
+      31 +            'is_checked_out' => $this->is_checked_out,         
+      32 +            'category' => $this->whenLoaded('category', fn () =
+         +> [                                                            
+      33 +                'id' => $this->category->id,                   
+      34 +                'name' => $this->category->name,               
+      35 +            ]),                                                
+      36 +            'created_at' => $this->created_at?->toIso8601String
+         +(),                                                            
+      37 +        ];                                                     
+      38      }
+      39  }
+
+  Read 1 file (ctrl+o to expand)
+
+● Write(app/Http/Resources/CheckoutResource.php)
+  ⎿  Added 21 lines, removed 2 lines
+       1  <?php
+       2  
+       3 +declare(strict_types=1);                                       
+       4 +                                                               
+       5  namespace App\Http\Resources;
+       6  
+       7 +use App\Models\Checkout;                                       
+       8  use Illuminate\Http\Request;
+       9  use Illuminate\Http\Resources\Json\JsonResource;
+      10  
+       8 -class CheckoutResource extends JsonResource                    
+      11 +/**                                                            
+      12 + * @mixin Checkout                                             
+      13 + */                                                            
+      14 +final class CheckoutResource extends JsonResource              
+      15  {
+      16      /**
+      17       * Transform the resource into an array.
+     ...
+      20       */
+      21      public function toArray(Request $request): array
+      22      {
+      17 -        return parent::toArray($request);                      
+      23 +        return [                                               
+      24 +            'id' => $this->id,                                 
+      25 +            'tool' => new ToolResource($this->whenLoaded('tool'
+         +)),                                                            
+      26 +            'worker' => new WorkerResource($this->whenLoaded('w
+         +orker')),                                                      
+      27 +            'checked_out_at' => $this->checked_out_at?->toIso86
+         +01String(),                                                    
+      28 +            'expected_return_at' => $this->expected_return_at?-
+         +>toIso8601String(),                                            
+      29 +            'returned_at' => $this->returned_at?->toIso8601Stri
+         +ng(),                                                          
+      30 +            'condition_out' => $this->condition_out,           
+      31 +            'condition_in' => $this->condition_in,             
+      32 +            'is_active' => $this->is_active,                   
+      33 +            'is_returned' => $this->is_returned,               
+      34 +            'is_overdue' => $this->is_overdue,                 
+      35 +            'duration' => $this->duration,                     
+      36 +        ];                                                     
+      37      }
+      38  }
+
+● Now the controllers:
+
+  Read 1 file (ctrl+o to expand)
+
+● Write(app/Http/Controllers/Api/WorkerController.php)
+  ⎿  Added 27 lines, removed 2 lines
+       1  <?php
+       2  
+       3 +declare(strict_types=1);                                       
+       4 +                                                               
+       5  namespace App\Http\Controllers\Api;
+       6  
+       7  use App\Http\Controllers\Controller;
+       8 +use App\Http\Resources\WorkerResource;                         
+       9 +use App\Models\Worker;                                         
+      10  use Illuminate\Http\Request;
+      11 +use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+      12  
+       8 -class WorkerController extends Controller                      
+      13 +final class WorkerController extends Controller                
+      14  {
+      10 -    //                                                         
+      15 +    /**                                                        
+      16 +     * List workers.                                           
+      17 +     */                                                        
+      18 +    public function index(Request $request): AnonymousResourceC
+         +ollection                                                      
+      19 +    {                                                          
+      20 +        $workers = Worker::query()                             
+      21 +            ->withCount('activeCheckouts')                     
+      22 +            ->when($request->boolean('active'), fn ($query) => 
+         +$query->active())                                              
+      23 +            ->when($request->string('search')->toString(), func
+         +tion ($query, string $search): void {                          
+      24 +                $query->where(function ($builder) use ($search)
+         +: void {                                                       
+      25 +                    $builder->where('first_name', 'like', "%{$s
+         +earch}%")                                                      
+      26 +                        ->orWhere('last_name', 'like', "%{$sear
+         +ch}%")                                                         
+      27 +                        ->orWhere('email', 'like', "%{$search}%
+         +");                                                            
+      28 +                });                                            
+      29 +            })                                                 
+      30 +            ->orderBy('last_name')                             
+      31 +            ->orderBy('first_name')                            
+      32 +            ->paginate($request->integer('per_page', 25));     
+      33 +                                                               
+      34 +        return WorkerResource::collection($workers);           
+      35 +    }                                                          
+      36  }
+
+● Write(app/Http/Controllers/Api/ToolController.php)
+  ⎿  Error writing file
+
+  Read 1 file (ctrl+o to expand)
+
+● Write(app/Http/Controllers/Api/ToolController.php)
+  ⎿  Added 27 lines, removed 2 lines
+       1  <?php
+       2  
+       3 +declare(strict_types=1);                                       
+       4 +                                                               
+       5  namespace App\Http\Controllers\Api;
+       6  
+       7  use App\Http\Controllers\Controller;
+       8 +use App\Http\Resources\ToolResource;                           
+       9 +use App\Models\Tool;                                           
+      10  use Illuminate\Http\Request;
+      11 +use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+      12  
+       8 -class ToolController extends Controller                        
+      13 +final class ToolController extends Controller                  
+      14  {
+      10 -    //                                                         
+      15 +    /**                                                        
+      16 +     * List tools.                                             
+      17 +     */                                                        
+      18 +    public function index(Request $request): AnonymousResourceC
+         +ollection                                                      
+      19 +    {                                                          
+      20 +        $tools = Tool::query()                                 
+      21 +            ->with('category')                                 
+      22 +            ->when($request->string('status')->toString(), fn (
+         +$query, string $status) => $query->where('status', $status))   
+      23 +            ->when($request->boolean('available'), fn ($query) 
+         +=> $query->available())                                        
+      24 +            ->when($request->string('search')->toString(), func
+         +tion ($query, string $search): void {                          
+      25 +                $query->where(function ($builder) use ($search)
+         +: void {                                                       
+      26 +                    $builder->where('name', 'like', "%{$search}
+         +%")                                                            
+      27 +                        ->orWhere('manufacturer', 'like', "%{$s
+         +earch}%")                                                      
+      28 +                        ->orWhere('model', 'like', "%{$search}%
+         +");                                                            
+      29 +                });                                            
+      30 +            })                                                 
+      31 +            ->orderBy('name')                                  
+      32 +            ->paginate($request->integer('per_page', 25));     
+      33 +                                                               
+      34 +        return ToolResource::collection($tools);               
+      35 +    }                                                          
+      36  }
+
+  Read 1 file (ctrl+o to expand)
+
+● Write(app/Http/Controllers/Api/CheckoutController.php)
+  ⎿  Added 23 lines, removed 2 lines
+       1  <?php
+       2  
+       3 +declare(strict_types=1);                                       
+       4 +                                                               
+       5  namespace App\Http\Controllers\Api;
+       6  
+       7  use App\Http\Controllers\Controller;
+       8 +use App\Http\Resources\CheckoutResource;                       
+       9 +use App\Models\Checkout;                                       
+      10  use Illuminate\Http\Request;
+      11 +use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+      12  
+       8 -class CheckoutController extends Controller                    
+      13 +final class CheckoutController extends Controller              
+      14  {
+      10 -    //                                                         
+      15 +    /**                                                        
+      16 +     * List checkouts.                                         
+      17 +     */                                                        
+      18 +    public function index(Request $request): AnonymousResourceC
+         +ollection                                                      
+      19 +    {                                                          
+      20 +        $checkouts = Checkout::query()                         
+      21 +            ->with(['tool.category', 'worker'])                
+      22 +            ->when($request->boolean('active'), fn ($query) => 
+         +$query->active())                                              
+      23 +            ->when($request->boolean('returned'), fn ($query) =
+         +> $query->returned())                                          
+      24 +            ->when($request->boolean('overdue'), fn ($query) =>
+         + $query->overdue())                                            
+      25 +            ->when($request->integer('worker_id'), fn ($query, 
+         +int $workerId) => $query->forWorker($workerId))                
+      26 +            ->when($request->integer('tool_id'), fn ($query, in
+         +t $toolId) => $query->forTool($toolId))                        
+      27 +            ->orderByDesc('checked_out_at')                    
+      28 +            ->paginate($request->integer('per_page', 25));     
+      29 +                                                               
+      30 +        return CheckoutResource::collection($checkouts);       
+      31 +    }                                                          
+      32  }
+
+● Now the token command:
+
+  Read 1 file (ctrl+o to expand)
+
+● Write(app/Console/Commands/CreateApiTokenCommand.php)
+  ⎿  Added 31 lines, removed 5 lines
+       1  <?php
+       2  
+       3 +declare(strict_types=1);                                       
+       4 +                                                               
+       5  namespace App\Console\Commands;
+       6  
+       7 +use App\Models\User;                                           
+       8  use Illuminate\Console\Command;
+       9  
+       7 -class CreateApiTokenCommand extends Command                    
+      10 +use function Laravel\Prompts\text;                             
+      11 +                                                               
+      12 +final class CreateApiTokenCommand extends Command              
+      13  {
+      14      /**
+      15       * The name and signature of the console command.
+      16       *
+      17       * @var string
+      18       */
+      14 -    protected $signature = 'app:create-api-token-command';     
+      19 +    protected $signature = 'api:token {email? : The email of th
+         +e user the token belongs to} {--name=api : A label for the toke
+         +n}';                                                           
+      20  
+      21      /**
+      22       * The console command description.
+      23       *
+      24       * @var string
+      25       */
+      21 -    protected $description = 'Command description';            
+      26 +    protected $description = 'Generate a personal access (beare
+         +r) token for a user';                                          
+      27  
+      28      /**
+      29       * Execute the console command.
+      30       */
+      26 -    public function handle()                                   
+      31 +    public function handle(): int                              
+      32      {
+      28 -        //                                                     
+      33 +        $email = $this->argument('email') ?? text(             
+      34 +            label: 'User email',                               
+      35 +            required: true,                                    
+      36 +        );                                                     
+      37 +                                                               
+      38 +        $user = User::query()->where('email', $email)->first();
+      39 +                                                               
+      40 +        if (! $user) {                                         
+      41 +            $this->error("No user found with email [{$email}]."
+         +);                                                             
+      42 +                                                               
+      43 +            return self::FAILURE;                              
+      44 +        }                                                      
+      45 +                                                               
+      46 +        $token = $user->createToken($this->option('name'));    
+      47 +                                                               
+      48 +        $this->info("Token created for {$user->email}:");      
+      49 +        $this->newLine();                                      
+      50 +        $this->line($token->plainTextToken);                   
+      51 +        $this->newLine();                                      
+      52 +        $this->comment('Use it as a header: Authorization: Bear
+         +er <token>');                                                  
+      53 +                                                               
+      54 +        return self::SUCCESS;                                  
+      55      }
+      56  }
+
+● Now wire up the protected routes. I'll keep the public PWA scanner routes
+  intact and add a token-protected surface (resource lists + scanner workflow)
+  using root-level paths that don't collide:
+
+● Write(routes/api.php)
+  ⎿  Added 31 lines
+       2  
+       3  declare(strict_types=1);
+       4  
+       5 +use App\Http\Controllers\Api\CheckoutController;               
+       6  use App\Http\Controllers\Api\ScannerController;
+       7 +use App\Http\Controllers\Api\ToolController;                   
+       8 +use App\Http\Controllers\Api\WorkerController;                 
+       9 +use Illuminate\Http\Request;                                   
+      10  use Illuminate\Support\Facades\Route;
+      11  
+      12 +/*                                                             
+      13 +|--------------------------------------------------------------
+         +------------                                                   
+      14 +| Public scanner endpoints (used by the browser PWA at /scanner
+         +)                                                              
+      15 +|--------------------------------------------------------------
+         +------------                                                   
+      16 +*/                                                             
+      17  Route::prefix('scanner')->group(function () {
+      18      Route::post('/scan', [ScannerController::class, 'scan'])->n
+          ame('scanner.scan');
+      19      Route::post('/scan-worker', [ScannerController::class, 'sca
+          nWorker'])->name('scanner.scan-worker');
+     ...
+      22      Route::post('/return', [ScannerController::class, 'return']
+          )->name('scanner.return');
+      23      Route::get('/workers/{worker}/tools', [ScannerController::c
+          lass, 'workerTools'])->name('scanner.worker-tools');
+      24  });
+      25 +                                                               
+      26 +/*                                                             
+      27 +|--------------------------------------------------------------
+         +------------                                                   
+      28 +| Token-protected API (per-user bearer token via Laravel Sanctu
+         +m)                                                             
+      29 +|--------------------------------------------------------------
+         +------------                                                   
+      30 +| Issue a token with: php artisan api:token {email}            
+      31 +| Send it as: Authorization: Bearer <token>                    
+      32 +*/                                                             
+      33 +Route::middleware('auth:sanctum')->group(function () {         
+      34 +    Route::get('/user', fn (Request $request) => $request->user
+         +())->name('api.user');                                         
+      35 +                                                               
+      36 +    // Read resources                                          
+      37 +    Route::get('/workers', [WorkerController::class, 'index'])-
+         +>name('api.workers.index');                                    
+      38 +    Route::get('/tools', [ToolController::class, 'index'])->nam
+         +e('api.tools.index');                                          
+      39 +    Route::get('/checkouts', [CheckoutController::class, 'index
+         +'])->name('api.checkouts.index');                              
+      40 +                                                               
+      41 +    // Scanner workflow                                        
+      42 +    Route::post('/scan', [ScannerController::class, 'scan'])->n
+         +ame('api.scan');                                               
+      43 +    Route::post('/scan-worker', [ScannerController::class, 'sca
+         +nWorker'])->name('api.scan-worker');                           
+      44 +    Route::post('/checkout', [ScannerController::class, 'checko
+         +ut'])->name('api.checkout');                                   
+      45 +    Route::post('/return', [ScannerController::class, 'return']
+         +)->name('api.return');                                         
+      46 +});                                                            
+
+● Let me verify routes register and the sanctum guard resolves, then format:
+
+  Ran 1 shell command (ctrl+o to expand)
+
+● Routes registered and Pint formatted the published files. Now let me check the
+  factories before writing tests:
+  Ran 2 shell commands (ctrl+o to expand)
+
+● Now let me write the feature test, following the existing direct-create()
+  pattern (no Tool/Checkout factories exist):
+
+  Ran 1 shell command (ctrl+o to expand)
+
+● Write(tests/Feature/ApiTokenAccessTest.php)
+  ⎿  Error writing file
+
+  Read 1 file (ctrl+o to expand)
+
+● Write(tests/Feature/ApiTokenAccessTest.php)
+  ⎿  Added 125 lines, removed 3 lines
+        1  <?php
+        2  
+        3 -test('example', function () {                                 
+        4 -    $response = $this->get('/');                              
+        3 +declare(strict_types=1);                                      
+        4  
+        6 -    $response->assertStatus(200);                             
+        5 +use App\Enums\StatusToolEnum;                                 
+        6 +use App\Models\Category;                                      
+        7 +use App\Models\Checkout;                                      
+        8 +use App\Models\Tool;                                          
+        9 +use App\Models\User;                                          
+       10 +use App\Models\Worker;                                        
+       11 +                                                              
+       12 +function apiToken(): string                                   
+       13 +{                                                             
+       14 +    return User::factory()->create()->createToken('test')->pla
+          +inTextToken;                                                  
+       15 +}                                                             
+       16 +                                                              
+       17 +it('rejects unauthenticated requests to the protected api', fu
+          +nction (string $uri) {                                        
+       18 +    $this->getJson($uri)->assertUnauthorized();               
+       19 +})->with([                                                    
+       20 +    '/api/workers',                                           
+       21 +    '/api/tools',                                             
+       22 +    '/api/checkouts',                                         
+       23 +]);                                                           
+       24 +                                                              
+       25 +it('lists workers for an authenticated token', function () {  
+       26 +    Worker::factory()->count(3)->create();                    
+       27 +                                                              
+       28 +    $this->withToken(apiToken())                              
+       29 +        ->getJson('/api/workers')                             
+       30 +        ->assertOk()                                          
+       31 +        ->assertJsonCount(3, 'data')                          
+       32 +        ->assertJsonStructure([                               
+       33 +            'data' => [['id', 'first_name', 'last_name', 'stat
+          +us', 'is_active']],                                           
+       34 +            'meta' => ['current_page', 'total'],              
+       35 +        ]);                                                   
+       36  });
+       37 +                                                              
+       38 +it('lists tools for an authenticated token', function () {    
+       39 +    $category = Category::factory()->create();                
+       40 +    Tool::create([                                            
+       41 +        'name' => 'Cordless Drill',                           
+       42 +        'category_id' => $category->id,                       
+       43 +        'status' => StatusToolEnum::Available,                
+       44 +    ]);                                                       
+       45 +                                                              
+       46 +    $this->withToken(apiToken())                              
+       47 +        ->getJson('/api/tools')                               
+       48 +        ->assertOk()                                          
+       49 +        ->assertJsonCount(1, 'data')                          
+       50 +        ->assertJsonPath('data.0.name', 'Cordless Drill')     
+       51 +        ->assertJsonPath('data.0.is_available', true);        
+       52 +});                                                           
+       53 +                                                              
+       54 +it('lists all checkouts for an authenticated token', function 
+          +() {                                                          
+       55 +    $worker = Worker::factory()->create();                    
+       56 +    $category = Category::factory()->create();                
+       57 +    $tool = Tool::create([                                    
+       58 +        'name' => 'Hammer',                                   
+       59 +        'category_id' => $category->id,                       
+       60 +        'status' => StatusToolEnum::CheckedOut,               
+       61 +    ]);                                                       
+       62 +    Checkout::create([                                        
+       63 +        'tool_id' => $tool->id,                               
+       64 +        'worker_id' => $worker->id,                           
+       65 +        'checked_out_at' => now(),                            
+       66 +    ]);                                                       
+       67 +                                                              
+       68 +    $this->withToken(apiToken())                              
+       69 +        ->getJson('/api/checkouts')                           
+       70 +        ->assertOk()                                          
+       71 +        ->assertJsonCount(1, 'data')                          
+       72 +        ->assertJsonPath('data.0.tool.name', 'Hammer')        
+       73 +        ->assertJsonPath('data.0.worker.id', $worker->id)     
+       74 +        ->assertJsonPath('data.0.is_active', true);           
+       75 +});                                                           
+       76 +                                                              
+       77 +it('runs the scanner workflow through the token api', function
+          + () {                                                         
+       78 +    $worker = Worker::factory()->create();                    
+       79 +    $category = Category::factory()->create();                
+       80 +    $tool = Tool::create([                                    
+       81 +        'name' => 'Wrench',                                   
+       82 +        'category_id' => $category->id,                       
+       83 +        'status' => StatusToolEnum::Available,                
+       84 +    ]);                                                       
+       85 +                                                              
+       86 +    $token = apiToken();                                      
+       87 +                                                              
+       88 +    // Step 1: scan the worker                                
+       89 +    $this->withToken($token)                                  
+       90 +        ->postJson('/api/scan-worker', [                      
+       91 +            'qr_data' => json_encode(['type' => 'worker', 'id'
+          + => $worker->id]),                                            
+       92 +        ])                                                    
+       93 +        ->assertOk()                                          
+       94 +        ->assertJsonPath('data.worker.id', $worker->id);      
+       95 +                                                              
+       96 +    // Step 2: check out a tool to that worker                
+       97 +    $this->withToken($token)                                  
+       98 +        ->postJson('/api/checkout', [                         
+       99 +            'tool_id' => $tool->id,                           
+      100 +            'worker_id' => $worker->id,                       
+      101 +        ])                                                    
+      102 +        ->assertOk()                                          
+      103 +        ->assertJsonPath('success', true);                    
+      104 +                                                              
+      105 +    $this->assertDatabaseHas('checkouts', [                   
+      106 +        'tool_id' => $tool->id,                               
+      107 +        'worker_id' => $worker->id,                           
+      108 +        'returned_at' => null,                                
+      109 +    ]);                                                       
+      110 +});                                                           
+      111 +                                                              
+      112 +it('rejects the scanner workflow without a token', function ()
+          + {                                                            
+      113 +    $this->postJson('/api/checkout', ['tool_id' => 1, 'worker_
+          +id' => 1])                                                    
+      114 +        ->assertUnauthorized();                               
+      115 +});                                                           
+      116 +                                                              
+      117 +it('generates a token for a user via the artisan command', fun
+          +ction () {                                                    
+      118 +    $user = User::factory()->create(['email' => 'tech@example.
+          +com']);                                                       
+      119 +                                                              
+      120 +    $this->artisan('api:token', ['email' => 'tech@example.com'
+          +])                                                            
+      121 +        ->assertSuccessful();                                 
+      122 +                                                              
+      123 +    expect($user->tokens()->count())->toBe(1);                
+      124 +});                                                           
+      125 +                                                              
+      126 +it('fails the token command for an unknown user', function () 
+          +{                                                             
+      127 +    $this->artisan('api:token', ['email' => 'nobody@example.co
+          +m'])                                                          
+      128 +        ->assertFailed();                                     
+      129 +});                                                           
+
+● Let me verify the test harness uses RefreshDatabase and that the sanctum guard
+  is registered, then run the new tests:
+
+  Ran 2 shell commands (ctrl+o to expand)
+
+● 4 failed — let me see all failures, not just the last:
+
+  Ran 1 shell command (ctrl+o to expand)
+
+● The authenticated tests pass, but unauthenticated requests aren't being
+  blocked (checkout reached validation = 422). Let me check whether the
+  middleware is actually attached and what status is returned:
+
+  Ran 1 shell command (ctrl+o to expand)
+
+● Middleware is attached. Sanctum's guard falls back to the configured
+  sanctum.guard (default web) session before checking the bearer token. Let me
+  see the actual status returned and the sanctum config:
+
+  Ran 1 shell command (ctrl+o to expand)
+
+● 401 works in isolation. Let me see the actual failure detail for the GET
+  dataset case in the test context:
+
+  Ran 1 shell command (ctrl+o to expand)
+
+● 200, not 401 — so in the test context a user is already authenticated on the
+  web guard (Sanctum checks web first). Let me check the test bootstrap:
+
+  Ran 1 shell command (ctrl+o to expand)
+
+● Found it: the base TestCase::setUp() calls actingAs(...) for every test,
+  logging in a default user on the web guard — and Sanctum checks the web guard
+  before the bearer token, so everything looks authenticated. I need to log that
+  user out in this test file so the bearer token is the only auth path (which
+  also makes the authenticated-token assertions meaningful rather than false
+  positives):
+
+● Update(tests/Feature/ApiTokenAccessTest.php)
+  ⎿  Added 6 lines
+      14      return User::factory()->create()->createToken('test')->plai
+          nTextToken;
+      15  }
+      16  
+      17 +// The base TestCase logs in a default user on the web guard. S
+         +anctum checks the                                              
+      18 +// web guard before the bearer token, so log out to exercise to
+         +ken auth in isolation.                                         
+      19 +beforeEach(function () {                                       
+      20 +    auth()->logout();                                          
+      21 +});                                                            
+      22 +                                                               
+      23  it('rejects unauthenticated requests to the protected api', fun
+          ction (string $uri) {
+      24      $this->getJson($uri)->assertUnauthorized();
+      25  })->with([
+
+  Ran 1 shell command (ctrl+o to expand)
+
+● All 10 pass. Now Pint on my new files and a quick full-suite sanity check:
+
+  Ran 2 shell commands (ctrl+o to expand)
+
+● Done. Full suite: 64 passed (was 54 — my 10 new tests all green). The only 5
+  failures are the same pre-existing auth/Playwright-browser tests, unrelated to
+  this change.
+
+  What was built
+
+  A per-user bearer-token API using Laravel Sanctum (which wasn't actually
+  installed — vendor, config, and api guard were all missing; I ran php artisan 
+  install:api).
+
+  Auth
+  - app/Models/User.php — added the HasApiTokens trait.
+  - Tokens are minted per user via a new command:
+  php artisan api:token user@example.com --name="scanner-ipad"
+  - It prints the plain-text token once. Send it as Authorization: Bearer 
+  <token>.
+
+  Protected endpoints (routes/api.php, behind auth:sanctum):
+
+  ┌────────┬──────────────────┬──────────────────────────────────────────────┐
+  │ Method │       URI        │                   Purpose                    │
+  ├────────┼──────────────────┼──────────────────────────────────────────────┤
+  │ GET    │ /api/workers     │ List workers (filters: active, search,       │
+  │        │                  │ per_page)                                    │
+  ├────────┼──────────────────┼──────────────────────────────────────────────┤
+  │ GET    │ /api/tools       │ List tools (filters: status, available,      │
+  │        │                  │ search)                                      │
+  ├────────┼──────────────────┼──────────────────────────────────────────────┤
+  │ GET    │ /api/checkouts   │ All checkouts (filters: active, returned,    │
+  │        │                  │ overdue, worker_id, tool_id)                 │
+  ├────────┼──────────────────┼──────────────────────────────────────────────┤
+  │ POST   │ /api/scan-worker │ Scanner workflow — identify worker from QR   │
+  ├────────┼──────────────────┼──────────────────────────────────────────────┤
+  │ POST   │ /api/scan        │ Identify tool from QR                        │
+  ├────────┼──────────────────┼──────────────────────────────────────────────┤
+  │ POST   │ /api/checkout    │ Check a tool out to a worker                 │
+  ├────────┼──────────────────┼──────────────────────────────────────────────┤
+  │ POST   │ /api/return      │ Return a tool                                │
+  ├────────┼──────────────────┼──────────────────────────────────────────────┤
+  │ GET    │ /api/user        │ Current token's user                         │
+  └────────┴──────────────────┴──────────────────────────────────────────────┘
+
+  The scanner endpoints reuse the existing (tested) ScannerController logic. The
+  public PWA scanner routes (/api/scanner/*) are left untouched so the browser
+  scanner keeps working.
+
+  Responses use Eloquent API Resources (WorkerResource, ToolResource,
+  CheckoutResource) — paginated data + meta, with nested relations loaded
+  eagerly (no N+1).
+
+  Tests — tests/Feature/ApiTokenAccessTest.php (10 cases): unauthenticated
+  requests rejected (401), each list endpoint with a valid token, the full
+  scan-worker→checkout workflow, and the token command (success + unknown user).
+
+  One thing worth flagging: the base TestCase::setUp() calls actingAs() on every
+  test, and Sanctum checks the web session guard before the bearer token. That
+  means any session-authenticated request (e.g. a logged-in Filament admin) will
+  also pass these endpoints. My tests log that user out to verify true token
+  behavior. If you want these endpoints to accept only bearer tokens and ignore
+  web sessions, set 'guard' => [] in config/sanctum.php — say the word and I'll
+  make that change with a test.
+
+✻ Baked for 8m 40s
+
+❯ set guard to empty so only tokens work                                        
+
+  Read 1 file (ctrl+o to expand)
+● Update(config/sanctum.php)
+  ⎿  Added 1 line, removed 1 line
+      39      |
+      40      */
+      41  
+      42 -    'guard' => ['web'],                                        
+      42 +    'guard' => [],                                             
+      43  
+      44      /*
+      45      |----------------------------------------------------------
+          ----------------
+
+● Now the beforeEach logout in the test is redundant — with guard => [], the web
+  session is ignored entirely. Let me remove it so the test actually proves
+  token-only enforcement (unauthenticated requests should 401 even with the
+  default user logged in):
+
+● Update(tests/Feature/ApiTokenAccessTest.php)
+  ⎿  Removed 6 lines
+      14      return User::factory()->create()->createToken('test')->plai
+          nTextToken;
+      15  }
+      16  
+      17 -// The base TestCase logs in a default user on the web guard. S
+         -anctum checks the                                              
+      18 -// web guard before the bearer token, so log out to exercise to
+         -ken auth in isolation.                                         
+      19 -beforeEach(function () {                                       
+      20 -    auth()->logout();                                          
+      21 -});                                                            
+      22 -                                                               
+      17  it('rejects unauthenticated requests to the protected api', fun
+          ction (string $uri) {
+      18      $this->getJson($uri)->assertUnauthorized();
+      19  })->with([
+
+  Ran 1 shell command (ctrl+o to expand)
+
+● All 10 still pass — and now the unauthenticated tests pass without logging out
+  the default user, proving the protected API ignores web sessions and accepts
+  only bearer tokens.
+
+  config/sanctum.php → 'guard' => [].
+
+  One operational note: if you run php artisan config:cache in production,
+  re-run it after this change so the new value is picked up.
+
+✻ Churned for 34s
