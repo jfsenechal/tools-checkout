@@ -22,11 +22,11 @@ final class WorkerResource extends Resource
 
     protected static string|null|UnitEnum $navigationGroup = 'Paramètres';
 
-    protected static ?string $navigationLabel = 'Agents';
+    protected static ?string $navigationLabel = 'Ouvriers';
 
-    protected static ?string $modelLabel = 'Agent';
+    protected static ?string $modelLabel = 'Ouvrier';
 
-    protected static ?string $pluralModelLabel = 'Agents';
+    protected static ?string $pluralModelLabel = 'Ouvriers';
 
     protected static ?int $navigationSort = 5;
 
