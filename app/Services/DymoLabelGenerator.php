@@ -21,10 +21,10 @@ final class DymoLabelGenerator
      * @var array<string, array{width: float, height: float, label: string}>
      */
     private const SIZES = [
-        // 1" x 1" square multipurpose (LW 550 equivalent of 30332 / S0929120).
-        '25x25' => ['width' => 0.9843, 'height' => 0.9843, 'label' => 'Square25mm'],
-        // 2-1/4" x 1-1/4" multipurpose (LW 550 equivalent of 30334).
-        '32x57' => ['width' => 2.2441, 'height' => 1.2598, 'label' => 'Multipurpose30334'],
+        // DYMO LabelWriter 550 durable 25 x 25 mm square (ref 2112286).
+        '25x25' => ['width' => 0.9843, 'height' => 0.9843, 'label' => 'Durable2112286'],
+        // DYMO LabelWriter 550 durable 57 x 32 mm (ref 2112289).
+        '32x57' => ['width' => 2.2441, 'height' => 1.2598, 'label' => 'Durable2112289'],
     ];
 
     public function generateForTool(Tool $tool, string $size): string

@@ -36,7 +36,7 @@ it('includes the tool name only on the wide 32x57 label', function () {
 
     expect($generator->generateForTool($tool, '32x57'))
         ->toContain('<Text>Big Hammer</Text>')
-        ->toContain('Multipurpose30334');
+        ->toContain('Durable2112289');
 
     expect($generator->generateForTool($tool, '25x25'))
         ->not->toContain('<Text>Big Hammer</Text>');
