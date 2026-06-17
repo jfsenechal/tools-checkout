@@ -16,7 +16,7 @@ function makeTool(string $name = 'Impact Drill'): Tool
     ]);
 }
 
-it('generates well-formed DesktopLabel XML with the tool qr payload', function () {
+it('generates valid DesktopLabel XML embedding a PNG QR image', function () {
     $tool = makeTool();
 
     $xml = app(DymoLabelGenerator::class)->generateForTool($tool, '25x25');
@@ -25,31 +25,28 @@ it('generates well-formed DesktopLabel XML with the tool qr payload', function (
 
     expect($doc)->not->toBeFalse()
         ->and($doc->getName())->toBe('DesktopLabel')
-        ->and($xml)->toContain('<QRCodeObject>')
-        ->and($xml)->toContain('<BarcodeFormat>QRCode</BarcodeFormat>')
-        ->and($xml)->toContain('<DataString>GSTOCK:T:'.$tool->id.'</DataString>')
-        ->and($xml)->toContain('<Value>GSTOCK:T:'.$tool->id.'</Value>');
+        ->and($xml)->toContain('<ImageObject>')
+        ->and($xml)->toContain('<ScaleMode>Uniform</ScaleMode>');
+
+    // The <Data> payload must be a real base64 PNG so DYMO can render it.
+    $data = (string) $doc->DYMOLabel->DynamicLayoutManager->LabelObjects->ImageObject->Data;
+    $png = base64_decode($data, true);
+
+    expect($png)->not->toBeFalse()
+        ->and(bin2hex(substr((string) $png, 0, 4)))->toBe('89504e47');
 });
 
-it('includes the tool name only on the wide 32x57 label', function () {
-    $tool = makeTool('Big Hammer');
+it('uses the matching DYMO durable label name and orientation per size', function () {
+    $tool = makeTool();
     $generator = app(DymoLabelGenerator::class);
 
-    expect($generator->generateForTool($tool, '32x57'))
-        ->toContain('<Text>Big Hammer</Text>')
-        ->toContain('Multipurpose11354');
-
     expect($generator->generateForTool($tool, '25x25'))
-        ->not->toContain('<Text>Big Hammer</Text>');
-});
+        ->toContain('<LabelName>LW DURABLE 25MM X 25MM</LabelName>')
+        ->toContain('<Orientation>Portrait</Orientation>');
 
-it('escapes special characters in the tool name', function () {
-    $tool = makeTool('Drill <Pro> & Co');
-
-    $xml = app(DymoLabelGenerator::class)->generateForTool($tool, '32x57');
-
-    expect(simplexml_load_string($xml))->not->toBeFalse()
-        ->and($xml)->toContain('Drill &lt;Pro&gt; &amp; Co');
+    expect($generator->generateForTool($tool, '32x57'))
+        ->toContain('<LabelName>LW DURABLE 57MM X 32MM</LabelName>')
+        ->toContain('<Orientation>Landscape</Orientation>');
 });
 
 it('downloads a .dymo attachment for the requested size', function () {

@@ -5,37 +5,46 @@ declare(strict_types=1);
 namespace App\Services;
 
 use App\Models\Tool;
+use SimpleSoftwareIO\QrCode\Facades\QrCode;
 
 /**
  * Builds DYMO Connect ".dymo" label files (DesktopLabel XML) for a tool.
  *
- * The structure mirrors a label exported by DYMO Connect itself: the QR code
- * is a native <QRCodeObject> carrying the same "GSTOCK:T:{id}" payload used by
- * the scanner, so the printed code scans identically to the app's SVG codes.
+ * The QR code is rendered server-side as a PNG and embedded as an <ImageObject>,
+ * which DYMO scales to fill its layout box (a native <QRCodeObject> only renders
+ * at fixed enum sizes and cannot fill the label). The schema mirrors a label
+ * exported by DYMO Connect 1.4 for the LW Durable rolls. The QR payload matches
+ * the scanner format "GSTOCK:T:{id}".
  */
 final class DymoLabelGenerator
 {
     /**
-     * Per-size geometry. Physical label dimensions plus the printable rectangle
-     * (origin x/y and width/height, all in inches) that DYMO Connect uses for
-     * the media. Object coordinates must live inside this printable rectangle,
-     * otherwise DYMO renders them small/mispositioned once it applies its own
-     * label definition.
+     * Per-size geometry, in inches, matching DYMO Connect's media definitions.
+     * "rect" is the printable rectangle; "img" is the image layout box (the QR
+     * is scaled uniformly and centred within it).
      *
-     * @var array<string, array{width: float, height: float, rectX: float, rectY: float, rectW: float, rectH: float, label: string}>
+     * @var array<string, array{
+     *     orientation: string,
+     *     label: string,
+     *     rectX: float, rectY: float, rectW: float, rectH: float,
+     *     imgX: float, imgY: float, imgW: float, imgH: float,
+     * }>
      */
     private const SIZES = [
-        // 25 x 25 mm square (LW 550 durable ref 2112286 / equivalent S0929120).
+        // 25 x 25 mm square — DYMO LW Durable ref 2112286 (exact export values).
         '25x25' => [
-            'width' => 0.9843, 'height' => 0.9843,
-            'rectX' => 0.1, 'rectY' => 0.0566, 'rectW' => 0.84, 'rectH' => 0.9033,
-            'label' => 'SmallS0929120',
+            'orientation' => 'Portrait',
+            'label' => 'LW DURABLE 25MM X 25MM',
+            'rectX' => 0.04, 'rectY' => 0.1, 'rectW' => 0.9033, 'rectH' => 0.84,
+            'imgX' => 0.0658, 'imgY' => 0.11, 'imgW' => 0.8685, 'imgH' => 0.8121,
         ],
-        // 57 x 32 mm multipurpose (LW 550 durable ref 2112289 / equivalent 11354).
+        // 57 x 32 mm — DYMO LW Durable ref 2112289. QR scaled to the printable
+        // height and centred; ScaleMode "Uniform" keeps it square.
         '32x57' => [
-            'width' => 2.2441, 'height' => 1.2598,
-            'rectX' => 0.1, 'rectY' => 0.06, 'rectW' => 2.0441, 'rectH' => 1.1398,
-            'label' => 'Multipurpose11354',
+            'orientation' => 'Landscape',
+            'label' => 'LW DURABLE 57MM X 32MM',
+            'rectX' => 0.04, 'rectY' => 0.08, 'rectW' => 2.1641, 'rectH' => 1.1,
+            'imgX' => 0.04, 'imgY' => 0.08, 'imgW' => 2.1641, 'imgH' => 1.1,
         ],
     ];
 
@@ -43,35 +52,25 @@ final class DymoLabelGenerator
     {
         $config = self::SIZES[$size] ?? self::SIZES['25x25'];
 
-        $data = 'GSTOCK:T:'.$tool->id;
-        $isWide = $size === '32x57';
+        $png = $this->qrPng('GSTOCK:T:'.$tool->id);
 
-        $rectX = $config['rectX'];
-        $rectY = $config['rectY'];
-        $rectW = $config['rectW'];
-        $rectH = $config['rectH'];
+        $image = $this->imageObject(
+            $png,
+            $config['imgX'],
+            $config['imgY'],
+            $config['imgW'],
+            $config['imgH'],
+        );
 
-        if ($isWide) {
-            // QR square fills the printable height on the left; name fills the rest.
-            $qrSide = $rectH;
-            $qrX = $rectX;
-            $qrY = $rectY;
-            $objects = $this->qrCodeObject($data, $qrX, $qrY, $qrSide, $qrSide);
-
-            $textX = $qrX + $qrSide + 0.08;
-            $textW = ($rectX + $rectW) - $textX;
-            $textH = $rectH * 0.7;
-            $textY = $rectY + ($rectH - $textH) / 2;
-            $objects .= "\n".$this->textObject($tool->name, $textX, $textY, $textW, $textH);
-        } else {
-            // Centred QR filling (almost) the whole square label.
-            $qrSide = min($rectW, $rectH) * 0.97;
-            $qrX = $rectX + ($rectW - $qrSide) / 2;
-            $qrY = $rectY + ($rectH - $qrSide) / 2;
-            $objects = $this->qrCodeObject($data, $qrX, $qrY, $qrSide, $qrSide);
-        }
-
-        return $this->wrap($config['label'], $rectX, $rectY, $rectW, $rectH, $objects);
+        return $this->wrap(
+            $config['orientation'],
+            $config['label'],
+            $config['rectX'],
+            $config['rectY'],
+            $config['rectW'],
+            $config['rectH'],
+            $image,
+        );
     }
 
     public function filename(Tool $tool, string $size): string
@@ -81,16 +80,38 @@ final class DymoLabelGenerator
         return mb_trim($slug, '-')."-{$tool->id}-{$size}.dymo";
     }
 
-    private function wrap(string $labelName, float $rectX, float $rectY, float $rectW, float $rectH, string $objects): string
+    /**
+     * Render the QR code as a base64-encoded PNG (high error correction so the
+     * thermal print scans reliably).
+     */
+    private function qrPng(string $data): string
     {
+        $png = (string) QrCode::format('png')
+            ->size(600)
+            ->margin(1)
+            ->errorCorrection('H')
+            ->generate($data);
+
+        return base64_encode($png);
+    }
+
+    private function wrap(
+        string $orientation,
+        string $labelName,
+        float $rectX,
+        float $rectY,
+        float $rectW,
+        float $rectH,
+        string $objects,
+    ): string {
         $labelName = $this->escape($labelName);
 
         return <<<XML
 <?xml version="1.0" encoding="utf-8"?>
 <DesktopLabel Version="1">
-  <DYMOLabel Version="3">
+  <DYMOLabel Version="4">
     <Description>DYMO Label</Description>
-    <Orientation>Landscape</Orientation>
+    <Orientation>{$orientation}</Orientation>
     <LabelName>{$labelName}</LabelName>
     <InitialLength>0</InitialLength>
     <BorderStyle>SolidLine</BorderStyle>
@@ -111,6 +132,8 @@ final class DymoLabelGenerator
     </BorderColor>
     <BorderThickness>1</BorderThickness>
     <Show_Border>False</Show_Border>
+    <HasFixedLength>False</HasFixedLength>
+    <FixedLengthValue>0</FixedLengthValue>
     <DynamicLayoutManager>
       <RotationBehavior>ClearObjects</RotationBehavior>
       <LabelObjects>
@@ -127,78 +150,15 @@ final class DymoLabelGenerator
 XML;
     }
 
-    private function qrCodeObject(string $data, float $x, float $y, float $width, float $height): string
+    private function imageObject(string $base64Png, float $x, float $y, float $width, float $height): string
     {
-        $data = $this->escape($data);
-
         return <<<XML
-        <QRCodeObject>
-          <Name>BARCODE</Name>
+        <ImageObject>
+          <Name>ImageObject0</Name>
           <Brushes>
             <BackgroundBrush>
               <SolidColorBrush>
-                <Color A="1" R="1" G="1" B="1"></Color>
-              </SolidColorBrush>
-            </BackgroundBrush>
-            <BorderBrush>
-              <SolidColorBrush>
-                <Color A="1" R="0" G="0" B="0"></Color>
-              </SolidColorBrush>
-            </BorderBrush>
-            <StrokeBrush>
-              <SolidColorBrush>
-                <Color A="1" R="0" G="0" B="0"></Color>
-              </SolidColorBrush>
-            </StrokeBrush>
-            <FillBrush>
-              <SolidColorBrush>
-                <Color A="1" R="0" G="0" B="0"></Color>
-              </SolidColorBrush>
-            </FillBrush>
-          </Brushes>
-          <Rotation>Rotation0</Rotation>
-          <OutlineThickness>1</OutlineThickness>
-          <IsOutlined>False</IsOutlined>
-          <BorderStyle>SolidLine</BorderStyle>
-          <Margin>
-            <DYMOThickness Left="0" Top="0" Right="0" Bottom="0" />
-          </Margin>
-          <BarcodeFormat>QRCode</BarcodeFormat>
-          <Data>
-            <DataString>{$data}</DataString>
-          </Data>
-          <HorizontalAlignment>Center</HorizontalAlignment>
-          <VerticalAlignment>Middle</VerticalAlignment>
-          <Size>Large</Size>
-          <EQRCodeType>QRCodeText</EQRCodeType>
-          <TextDataHolder>
-            <Value>{$data}</Value>
-          </TextDataHolder>
-          <ObjectLayout>
-            <DYMOPoint>
-              <X>{$x}</X>
-              <Y>{$y}</Y>
-            </DYMOPoint>
-            <Size>
-              <Width>{$width}</Width>
-              <Height>{$height}</Height>
-            </Size>
-          </ObjectLayout>
-        </QRCodeObject>
-XML;
-    }
-
-    private function textObject(string $text, float $x, float $y, float $width, float $height): string
-    {
-        $text = $this->escape($text);
-
-        return <<<XML
-        <TextObject>
-          <Name>NameText</Name>
-          <Brushes>
-            <BackgroundBrush>
-              <SolidColorBrush>
-                <Color A="0" R="1" G="1" B="1"></Color>
+                <Color A="0" R="0" G="0" B="0"></Color>
               </SolidColorBrush>
             </BackgroundBrush>
             <BorderBrush>
@@ -224,33 +184,10 @@ XML;
           <Margin>
             <DYMOThickness Left="0" Top="0" Right="0" Bottom="0" />
           </Margin>
+          <Data>{$base64Png}</Data>
+          <ScaleMode>Uniform</ScaleMode>
           <HorizontalAlignment>Center</HorizontalAlignment>
           <VerticalAlignment>Middle</VerticalAlignment>
-          <FitMode>AlwaysFit</FitMode>
-          <IsVertical>False</IsVertical>
-          <FormattedText>
-            <FitMode>AlwaysFit</FitMode>
-            <HorizontalAlignment>Center</HorizontalAlignment>
-            <VerticalAlignment>Middle</VerticalAlignment>
-            <IsVertical>False</IsVertical>
-            <LineTextSpan>
-              <TextSpan>
-                <Text>{$text}</Text>
-                <FontInfo>
-                  <FontName>Arial</FontName>
-                  <FontSize>10</FontSize>
-                  <IsBold>True</IsBold>
-                  <IsItalic>False</IsItalic>
-                  <IsUnderline>False</IsUnderline>
-                  <FontBrush>
-                    <SolidColorBrush>
-                      <Color A="1" R="0" G="0" B="0"></Color>
-                    </SolidColorBrush>
-                  </FontBrush>
-                </FontInfo>
-              </TextSpan>
-            </LineTextSpan>
-          </FormattedText>
           <ObjectLayout>
             <DYMOPoint>
               <X>{$x}</X>
@@ -261,7 +198,7 @@ XML;
               <Height>{$height}</Height>
             </Size>
           </ObjectLayout>
-        </TextObject>
+        </ImageObject>
 XML;
     }
 
