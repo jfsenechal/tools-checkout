@@ -8,7 +8,6 @@ use App\Enums\StatusToolEnum;
 use App\Filament\Resources\Tools\Actions\DownloadQrLabelAction;
 use App\Filament\Resources\Tools\Actions\GenerateQrAction;
 use App\Filament\Resources\Tools\Actions\GenerateQrCodesBulkAction;
-use App\Filament\Resources\Tools\Actions\ViewQrAction;
 use App\Models\Tool;
 use Filament\Actions\BulkAction;
 use Filament\Actions\BulkActionGroup;
@@ -31,7 +30,7 @@ final class ToolsTable
                     ->label('Nom')
                     ->searchable()
                     ->sortable()
-                    ->description(fn (Tool $record): string => $record->description ?? ''),
+                    ->description(fn(Tool $record): string => $record->description ?? ''),
 
                 Tables\Columns\TextColumn::make('category.name')
                     ->label('Catégorie')
@@ -69,7 +68,6 @@ final class ToolsTable
             ])
             ->recordActions([
                 GenerateQrAction::make(),
-                ViewQrAction::make(),
                 DownloadQrLabelAction::make(),
                 EditAction::make()
                     ->icon(Heroicon::PencilSquare),
@@ -83,7 +81,7 @@ final class ToolsTable
                         ->icon('heroicon-o-printer')
                         ->deselectRecordsAfterCompletion()
                         ->action(function (Collection $records, $livewire): void {
-                            $ids = $records->filter(fn (Tool $tool) => $tool->qr_code !== null)->pluck('id')->join(',');
+                            $ids = $records->filter(fn(Tool $tool) => $tool->qr_code !== null)->pluck('id')->join(',');
 
                             if ($ids !== '') {
                                 $livewire->js("window.open('/print/qrcodes?tools={$ids}', '_blank')");

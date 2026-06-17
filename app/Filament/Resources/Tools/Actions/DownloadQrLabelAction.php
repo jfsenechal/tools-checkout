@@ -16,10 +16,7 @@ final class DownloadQrLabelAction
     public static function make(): ActionGroup
     {
         return ActionGroup::make([
-            self::printAction('25x25', 'Imprimer 25 × 25 mm')
-                ->visible(fn (Tool $record): bool => (bool) $record->qr_code),
-            self::printAction('32x57', 'Imprimer 32 × 57 mm')
-                ->visible(fn (Tool $record): bool => (bool) $record->qr_code),
+            ViewQrAction::make(),
             self::dymoAction('25x25', 'DYMO 25 × 25 mm'),
             self::dymoAction('32x57', 'DYMO 32 × 57 mm'),
         ])
@@ -33,7 +30,7 @@ final class DownloadQrLabelAction
         return Action::make('qr_label_'.$size)
             ->label($label)
             ->icon(Heroicon::QrCode)
-            ->url(fn (Tool $record): string => route('print.qr-label', [
+            ->url(fn(Tool $record): string => route('print.qr-label', [
                 'tool' => $record,
                 'size' => $size,
             ]))
@@ -51,7 +48,7 @@ final class DownloadQrLabelAction
                 $generator = app(DymoLabelGenerator::class);
 
                 return response()->streamDownload(
-                    fn () => print ($generator->generateForTool($record, $size)),
+                    fn() => print ($generator->generateForTool($record, $size)),
                     $generator->filename($record, $size),
                     ['Content-Type' => 'application/xml'],
                 );
