@@ -16,15 +16,27 @@ use App\Models\Tool;
 final class DymoLabelGenerator
 {
     /**
-     * Inch dimensions and DYMO Connect media names per supported size.
+     * Per-size geometry. Physical label dimensions plus the printable rectangle
+     * (origin x/y and width/height, all in inches) that DYMO Connect uses for
+     * the media. Object coordinates must live inside this printable rectangle,
+     * otherwise DYMO renders them small/mispositioned once it applies its own
+     * label definition.
      *
-     * @var array<string, array{width: float, height: float, label: string}>
+     * @var array<string, array{width: float, height: float, rectX: float, rectY: float, rectW: float, rectH: float, label: string}>
      */
     private const SIZES = [
         // 25 x 25 mm square (LW 550 durable ref 2112286 / equivalent S0929120).
-        '25x25' => ['width' => 0.9843, 'height' => 0.9843, 'label' => 'SmallS0929120'],
+        '25x25' => [
+            'width' => 0.9843, 'height' => 0.9843,
+            'rectX' => 0.1, 'rectY' => 0.0566, 'rectW' => 0.84, 'rectH' => 0.9033,
+            'label' => 'SmallS0929120',
+        ],
         // 57 x 32 mm multipurpose (LW 550 durable ref 2112289 / equivalent 11354).
-        '32x57' => ['width' => 2.2441, 'height' => 1.2598, 'label' => 'Multipurpose11354'],
+        '32x57' => [
+            'width' => 2.2441, 'height' => 1.2598,
+            'rectX' => 0.1, 'rectY' => 0.06, 'rectW' => 2.0441, 'rectH' => 1.1398,
+            'label' => 'Multipurpose11354',
+        ],
     ];
 
     public function generateForTool(Tool $tool, string $size): string
@@ -34,30 +46,32 @@ final class DymoLabelGenerator
         $data = 'GSTOCK:T:'.$tool->id;
         $isWide = $size === '32x57';
 
-        $width = $config['width'];
-        $height = $config['height'];
-        $margin = 0.06;
+        $rectX = $config['rectX'];
+        $rectY = $config['rectY'];
+        $rectW = $config['rectW'];
+        $rectH = $config['rectH'];
 
         if ($isWide) {
-            // QR on the left (square, full height), tool name on the right.
-            $qrSide = $height - 2 * $margin;
-            $objects = $this->qrCodeObject($data, $margin, $margin, $qrSide, $qrSide);
+            // QR square fills the printable height on the left; name fills the rest.
+            $qrSide = $rectH;
+            $qrX = $rectX;
+            $qrY = $rectY;
+            $objects = $this->qrCodeObject($data, $qrX, $qrY, $qrSide, $qrSide);
 
-            $textX = $margin + $qrSide + 0.08;
-            $objects .= "\n".$this->textObject(
-                $tool->name,
-                $textX,
-                $margin,
-                $width - $textX - $margin,
-                $height - 2 * $margin,
-            );
+            $textX = $qrX + $qrSide + 0.08;
+            $textW = ($rectX + $rectW) - $textX;
+            $textH = $rectH * 0.7;
+            $textY = $rectY + ($rectH - $textH) / 2;
+            $objects .= "\n".$this->textObject($tool->name, $textX, $textY, $textW, $textH);
         } else {
-            // Centred QR filling the square label.
-            $qrSide = $width - 2 * $margin;
-            $objects = $this->qrCodeObject($data, $margin, $margin, $qrSide, $qrSide);
+            // Centred QR filling (almost) the whole square label.
+            $qrSide = min($rectW, $rectH) * 0.97;
+            $qrX = $rectX + ($rectW - $qrSide) / 2;
+            $qrY = $rectY + ($rectH - $qrSide) / 2;
+            $objects = $this->qrCodeObject($data, $qrX, $qrY, $qrSide, $qrSide);
         }
 
-        return $this->wrap($config['label'], $width, $height, $objects);
+        return $this->wrap($config['label'], $rectX, $rectY, $rectW, $rectH, $objects);
     }
 
     public function filename(Tool $tool, string $size): string
@@ -67,7 +81,7 @@ final class DymoLabelGenerator
         return mb_trim($slug, '-')."-{$tool->id}-{$size}.dymo";
     }
 
-    private function wrap(string $labelName, float $width, float $height, string $objects): string
+    private function wrap(string $labelName, float $rectX, float $rectY, float $rectW, float $rectH, string $objects): string
     {
         $labelName = $this->escape($labelName);
 
@@ -82,12 +96,12 @@ final class DymoLabelGenerator
     <BorderStyle>SolidLine</BorderStyle>
     <DYMORect>
       <DYMOPoint>
-        <X>0</X>
-        <Y>0</Y>
+        <X>{$rectX}</X>
+        <Y>{$rectY}</Y>
       </DYMOPoint>
       <Size>
-        <Width>{$width}</Width>
-        <Height>{$height}</Height>
+        <Width>{$rectW}</Width>
+        <Height>{$rectH}</Height>
       </Size>
     </DYMORect>
     <BorderColor>
