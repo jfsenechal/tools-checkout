@@ -60,6 +60,11 @@ it('downloads a .dymo attachment for the requested size', function () {
     expect($response->headers->get('content-disposition'))
         ->toContain('attachment')
         ->toContain('-32x57.dymo');
+
+    // The body must be clean XML with no leaked warnings/output before <?xml.
+    $body = $response->getContent();
+    expect(str_starts_with($body, '<?xml'))->toBeTrue()
+        ->and(simplexml_load_string($body))->not->toBeFalse();
 });
 
 it('defaults to the 25x25 dymo label for an unknown size', function () {

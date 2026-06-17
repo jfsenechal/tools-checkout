@@ -86,11 +86,20 @@ final class DymoLabelGenerator
      */
     private function qrPng(string $data): string
     {
-        $png = (string) QrCode::format('png')
-            ->size(600)
-            ->margin(1)
-            ->errorCorrection('H')
-            ->generate($data);
+        // Wrap generation in an output buffer: the underlying QR/Imagick stack
+        // can emit deprecation notices which would otherwise leak into the HTTP
+        // response body and corrupt the downloaded .dymo file.
+        ob_start();
+
+        try {
+            $png = (string) QrCode::format('png')
+                ->size(600)
+                ->margin(1)
+                ->errorCorrection('H')
+                ->generate($data);
+        } finally {
+            ob_end_clean();
+        }
 
         return base64_encode($png);
     }
