@@ -57,3 +57,13 @@ Route::get('/print/qrcodes', function (Illuminate\Http\Request $request) {
 
     return view('print-qrcodes', compact('tools', 'workers'));
 })->name('print.qrcodes');
+
+Route::get('/print/qr-label/{tool}', function (App\Models\Tool $tool, Illuminate\Http\Request $request) {
+    abort_unless((bool) $tool->qr_code, 404);
+
+    $size = $request->query('size') === '32x57' ? '32x57' : '25x25';
+
+    $tool->loadMissing('category');
+
+    return view('print-qr-label', compact('tool', 'size'));
+})->name('print.qr-label');

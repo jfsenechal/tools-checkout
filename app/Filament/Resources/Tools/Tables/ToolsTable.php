@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Filament\Resources\Tools\Tables;
 
 use App\Enums\StatusToolEnum;
+use App\Filament\Resources\Tools\Actions\DownloadQrLabelAction;
 use App\Filament\Resources\Tools\Actions\GenerateQrAction;
 use App\Filament\Resources\Tools\Actions\GenerateQrCodesBulkAction;
 use App\Filament\Resources\Tools\Actions\ViewQrAction;
@@ -69,6 +70,7 @@ final class ToolsTable
             ->recordActions([
                 GenerateQrAction::make(),
                 ViewQrAction::make(),
+                DownloadQrLabelAction::make(),
                 EditAction::make()
                     ->icon(Heroicon::PencilSquare),
                 DeleteAction::make()
