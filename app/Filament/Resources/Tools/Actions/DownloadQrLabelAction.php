@@ -14,16 +14,19 @@ final class DownloadQrLabelAction
     public static function make(): ActionGroup
     {
         return ActionGroup::make([
-            self::sizeAction('25x25', '25 × 25 mm'),
-            self::sizeAction('32x57', '32 × 57 mm'),
+            self::printAction('25x25', 'Imprimer 25 × 25 mm')
+                ->visible(fn (Tool $record): bool => (bool) $record->qr_code),
+            self::printAction('32x57', 'Imprimer 32 × 57 mm')
+                ->visible(fn (Tool $record): bool => (bool) $record->qr_code),
+            self::dymoAction('25x25', 'DYMO 25 × 25 mm'),
+            self::dymoAction('32x57', 'DYMO 32 × 57 mm'),
         ])
             ->label('Étiquette QR')
             ->icon(Heroicon::Printer)
-            ->button()
-            ->visible(fn (Tool $record): bool => (bool) $record->qr_code);
+            ->button();
     }
 
-    private static function sizeAction(string $size, string $label): Action
+    private static function printAction(string $size, string $label): Action
     {
         return Action::make('qr_label_'.$size)
             ->label($label)
@@ -33,5 +36,16 @@ final class DownloadQrLabelAction
                 'size' => $size,
             ]))
             ->openUrlInNewTab();
+    }
+
+    private static function dymoAction(string $size, string $label): Action
+    {
+        return Action::make('qr_dymo_'.$size)
+            ->label($label)
+            ->icon(Heroicon::ArrowDownTray)
+            ->url(fn (Tool $record): string => route('print.qr-dymo', [
+                'tool' => $record,
+                'size' => $size,
+            ]));
     }
 }

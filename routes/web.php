@@ -67,3 +67,14 @@ Route::get('/print/qr-label/{tool}', function (App\Models\Tool $tool, Illuminate
 
     return view('print-qr-label', compact('tool', 'size'));
 })->name('print.qr-label');
+
+Route::get('/print/qr-dymo/{tool}', function (App\Models\Tool $tool, Illuminate\Http\Request $request, App\Services\DymoLabelGenerator $generator) {
+    $size = $request->query('size') === '32x57' ? '32x57' : '25x25';
+
+    $tool->loadMissing('category');
+
+    return response($generator->generateForTool($tool, $size), 200, [
+        'Content-Type' => 'application/xml',
+        'Content-Disposition' => 'attachment; filename="'.$generator->filename($tool, $size).'"',
+    ]);
+})->name('print.qr-dymo');
