@@ -25,6 +25,7 @@ it('generates well-formed DesktopLabel XML with the tool qr payload', function (
 
     expect($doc)->not->toBeFalse()
         ->and($doc->getName())->toBe('DesktopLabel')
+        ->and($xml)->toContain('<QRCodeObject>')
         ->and($xml)->toContain('<BarcodeFormat>QRCode</BarcodeFormat>')
         ->and($xml)->toContain('<DataString>GSTOCK:T:'.$tool->id.'</DataString>')
         ->and($xml)->toContain('<Value>GSTOCK:T:'.$tool->id.'</Value>');
@@ -36,7 +37,7 @@ it('includes the tool name only on the wide 32x57 label', function () {
 
     expect($generator->generateForTool($tool, '32x57'))
         ->toContain('<Text>Big Hammer</Text>')
-        ->toContain('Durable2112289');
+        ->toContain('Multipurpose11354');
 
     expect($generator->generateForTool($tool, '25x25'))
         ->not->toContain('<Text>Big Hammer</Text>');

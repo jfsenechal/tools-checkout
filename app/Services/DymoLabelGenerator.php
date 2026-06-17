@@ -9,22 +9,22 @@ use App\Models\Tool;
 /**
  * Builds DYMO Connect ".dymo" label files (DesktopLabel XML) for a tool.
  *
- * The label embeds a native DYMO QR Code barcode object carrying the same
- * "GSTOCK:T:{id}" payload used by the scanner, so the printed code scans
- * identically to the SVG codes generated elsewhere in the app.
+ * The structure mirrors a label exported by DYMO Connect itself: the QR code
+ * is a native <QRCodeObject> carrying the same "GSTOCK:T:{id}" payload used by
+ * the scanner, so the printed code scans identically to the app's SVG codes.
  */
 final class DymoLabelGenerator
 {
     /**
-     * Inch dimensions and DYMO label media names per supported size.
+     * Inch dimensions and DYMO Connect media names per supported size.
      *
      * @var array<string, array{width: float, height: float, label: string}>
      */
     private const SIZES = [
-        // DYMO LabelWriter 550 durable 25 x 25 mm square (ref 2112286).
-        '25x25' => ['width' => 0.9843, 'height' => 0.9843, 'label' => 'Durable2112286'],
-        // DYMO LabelWriter 550 durable 57 x 32 mm (ref 2112289).
-        '32x57' => ['width' => 2.2441, 'height' => 1.2598, 'label' => 'Durable2112289'],
+        // 25 x 25 mm square (LW 550 durable ref 2112286 / equivalent S0929120).
+        '25x25' => ['width' => 0.9843, 'height' => 0.9843, 'label' => 'SmallS0929120'],
+        // 57 x 32 mm multipurpose (LW 550 durable ref 2112289 / equivalent 11354).
+        '32x57' => ['width' => 2.2441, 'height' => 1.2598, 'label' => 'Multipurpose11354'],
     ];
 
     public function generateForTool(Tool $tool, string $size): string
@@ -36,18 +36,25 @@ final class DymoLabelGenerator
 
         $width = $config['width'];
         $height = $config['height'];
-
-        // Square: a centred QR filling the label. Wide: QR on the left, name on the right.
-        $qrSide = min($isWide ? $height - 0.16 : $width - 0.08, $height - 0.08);
-        $qrX = $isWide ? 0.08 : ($width - $qrSide) / 2;
-        $qrY = ($height - $qrSide) / 2;
-
-        $objects = $this->barcodeObject($data, $qrX, $qrY, $qrSide);
+        $margin = 0.06;
 
         if ($isWide) {
-            $textX = $qrX + $qrSide + 0.08;
-            $textWidth = $width - $textX - 0.06;
-            $objects .= $this->textObject($tool->name, $textX, 0.1, $textWidth, $height - 0.2);
+            // QR on the left (square, full height), tool name on the right.
+            $qrSide = $height - 2 * $margin;
+            $objects = $this->qrCodeObject($data, $margin, $margin, $qrSide, $qrSide);
+
+            $textX = $margin + $qrSide + 0.08;
+            $objects .= "\n".$this->textObject(
+                $tool->name,
+                $textX,
+                $margin,
+                $width - $textX - $margin,
+                $height - 2 * $margin,
+            );
+        } else {
+            // Centred QR filling the square label.
+            $qrSide = $width - 2 * $margin;
+            $objects = $this->qrCodeObject($data, $margin, $margin, $qrSide, $qrSide);
         }
 
         return $this->wrap($config['label'], $width, $height, $objects);
@@ -106,17 +113,17 @@ final class DymoLabelGenerator
 XML;
     }
 
-    private function barcodeObject(string $data, float $x, float $y, float $side): string
+    private function qrCodeObject(string $data, float $x, float $y, float $width, float $height): string
     {
         $data = $this->escape($data);
 
         return <<<XML
-        <BarcodeObject>
-          <Name>QRCode</Name>
+        <QRCodeObject>
+          <Name>BARCODE</Name>
           <Brushes>
             <BackgroundBrush>
               <SolidColorBrush>
-                <Color A="0" R="0" G="0" B="0"></Color>
+                <Color A="1" R="1" G="1" B="1"></Color>
               </SolidColorBrush>
             </BackgroundBrush>
             <BorderBrush>
@@ -148,35 +155,22 @@ XML;
           </Data>
           <HorizontalAlignment>Center</HorizontalAlignment>
           <VerticalAlignment>Middle</VerticalAlignment>
-          <Size>AutoFit</Size>
+          <Size>Medium</Size>
           <EQRCodeType>QRCodeText</EQRCodeType>
           <TextDataHolder>
             <Value>{$data}</Value>
           </TextDataHolder>
-          <TextPosition>None</TextPosition>
-          <FontInfo>
-            <FontName>Arial</FontName>
-            <FontSize>7.3</FontSize>
-            <IsBold>False</IsBold>
-            <IsItalic>False</IsItalic>
-            <IsUnderline>False</IsUnderline>
-            <FontBrush>
-              <SolidColorBrush>
-                <Color A="1" R="0" G="0" B="0"></Color>
-              </SolidColorBrush>
-            </FontBrush>
-          </FontInfo>
           <ObjectLayout>
             <DYMOPoint>
               <X>{$x}</X>
               <Y>{$y}</Y>
             </DYMOPoint>
             <Size>
-              <Width>{$side}</Width>
-              <Height>{$side}</Height>
+              <Width>{$width}</Width>
+              <Height>{$height}</Height>
             </Size>
           </ObjectLayout>
-        </BarcodeObject>
+        </QRCodeObject>
 XML;
     }
 
@@ -184,7 +178,7 @@ XML;
     {
         $text = $this->escape($text);
 
-        return "\n".<<<XML
+        return <<<XML
         <TextObject>
           <Name>NameText</Name>
           <Brushes>
@@ -216,21 +210,21 @@ XML;
           <Margin>
             <DYMOThickness Left="0" Top="0" Right="0" Bottom="0" />
           </Margin>
-          <HorizontalAlignment>Left</HorizontalAlignment>
+          <HorizontalAlignment>Center</HorizontalAlignment>
           <VerticalAlignment>Middle</VerticalAlignment>
-          <FitMode>AlwaysFit</FitMode>
+          <FitMode>ShrinkToFit</FitMode>
           <IsVertical>False</IsVertical>
           <FormattedText>
-            <FitMode>AlwaysFit</FitMode>
-            <HorizontalAlignment>Left</HorizontalAlignment>
+            <FitMode>ShrinkToFit</FitMode>
+            <HorizontalAlignment>Center</HorizontalAlignment>
             <VerticalAlignment>Middle</VerticalAlignment>
             <IsVertical>False</IsVertical>
             <LineTextSpan>
               <TextSpan>
                 <Text>{$text}</Text>
                 <FontInfo>
-                  <FontName>Noto Sans</FontName>
-                  <FontSize>8.8</FontSize>
+                  <FontName>Arial</FontName>
+                  <FontSize>10</FontSize>
                   <IsBold>True</IsBold>
                   <IsItalic>False</IsItalic>
                   <IsUnderline>False</IsUnderline>
