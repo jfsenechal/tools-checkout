@@ -169,7 +169,7 @@ XML;
           </Data>
           <HorizontalAlignment>Center</HorizontalAlignment>
           <VerticalAlignment>Middle</VerticalAlignment>
-          <Size>Medium</Size>
+          <Size>Large</Size>
           <EQRCodeType>QRCodeText</EQRCodeType>
           <TextDataHolder>
             <Value>{$data}</Value>
