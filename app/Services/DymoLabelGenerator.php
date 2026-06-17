@@ -5,6 +5,9 @@ declare(strict_types=1);
 namespace App\Services;
 
 use App\Models\Tool;
+use Illuminate\Support\Str;
+use Imagick;
+use ImagickException;
 use SimpleSoftwareIO\QrCode\Facades\QrCode;
 
 /**
@@ -52,10 +55,16 @@ final class DymoLabelGenerator
     {
         $config = self::SIZES[$size] ?? self::SIZES['25x25'];
 
-        $png = $this->qrPng('GSTOCK:T:'.$tool->id);
+        $qrPng = $this->qrPng('GSTOCK:T:'.$tool->id);
+
+        // The wide label pairs the QR with the tool name. Both are composed into
+        // a single PNG so we only rely on the verified <ImageObject> schema.
+        $png = $size === '32x57'
+            ? $this->composeQrWithName($qrPng, $tool->name, $config['imgW'], $config['imgH'])
+            : $qrPng;
 
         $image = $this->imageObject(
-            $png,
+            base64_encode($png),
             $config['imgX'],
             $config['imgY'],
             $config['imgW'],
@@ -75,14 +84,14 @@ final class DymoLabelGenerator
 
     public function filename(Tool $tool, string $size): string
     {
-        $slug = preg_replace('/[^A-Za-z0-9_-]+/', '-', $tool->name) ?: 'tool';
+        $slug = Str::slug($tool->name) ?: 'tool';
 
-        return mb_trim($slug, '-')."-{$tool->id}-{$size}.dymo";
+        return "{$slug}-{$tool->id}-{$size}.dymo";
     }
 
     /**
-     * Render the QR code as a base64-encoded PNG (high error correction so the
-     * thermal print scans reliably).
+     * Render the QR code as a PNG (high error correction so the thermal print
+     * scans reliably). Returns the raw PNG bytes.
      */
     private function qrPng(string $data): string
     {
@@ -92,7 +101,7 @@ final class DymoLabelGenerator
         ob_start();
 
         try {
-            $png = (string) QrCode::format('png')
+            return (string) QrCode::format('png')
                 ->size(600)
                 ->margin(1)
                 ->errorCorrection('H')
@@ -100,8 +109,78 @@ final class DymoLabelGenerator
         } finally {
             ob_end_clean();
         }
+    }
 
-        return base64_encode($png);
+    /**
+     * Compose the QR (left) and the tool name (right, auto-fitted) into a single
+     * PNG whose aspect ratio matches the image box, so it fills the label.
+     *
+     * @throws ImagickException
+     */
+    private function composeQrWithName(string $qrPng, string $name, float $aspectW, float $aspectH): string
+    {
+        $height = 600;
+        $width = (int) round($height * ($aspectW / $aspectH));
+
+        $qr = new Imagick;
+        $qr->readImageBlob($qrPng);
+        $qr->resizeImage($height, $height, Imagick::FILTER_BOX, 1);
+
+        $canvas = new Imagick;
+        $canvas->newImage($width, $height, 'white', 'png');
+        $canvas->compositeImage($qr, Imagick::COMPOSITE_OVER, 0, 0);
+
+        $name = mb_trim($name);
+
+        if ($name !== '') {
+            $textX = $height + 24;
+            $textW = $width - $textX - 20;
+            $caption = $this->captionImage($name, $textW, $height - 60);
+            $offsetY = (int) max(0, ($height - $caption->getImageHeight()) / 2);
+            $canvas->compositeImage($caption, Imagick::COMPOSITE_OVER, $textX, $offsetY);
+            $caption->clear();
+        }
+
+        $canvas->setImageFormat('png');
+        $blob = $canvas->getImageBlob();
+
+        $qr->clear();
+        $canvas->clear();
+
+        return $blob;
+    }
+
+    /**
+     * Build a caption image whose font size is auto-fitted to the given box.
+     *
+     * @throws ImagickException
+     */
+    private function captionImage(string $text, int $width, int $height): Imagick
+    {
+        $caption = new Imagick;
+        $caption->setBackgroundColor('white');
+        $caption->setFont($this->fontPath());
+        $caption->setGravity(Imagick::GRAVITY_CENTER);
+        $caption->newPseudoImage($width, $height, 'caption:'.$text);
+        $caption->setImageFormat('png');
+
+        return $caption;
+    }
+
+    private function fontPath(): string
+    {
+        $candidates = [
+            '/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf',
+            '/usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf',
+        ];
+
+        foreach ($candidates as $path) {
+            if (is_file($path)) {
+                return $path;
+            }
+        }
+
+        return 'Helvetica';
     }
 
     private function wrap(

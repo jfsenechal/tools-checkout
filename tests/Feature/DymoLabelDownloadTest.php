@@ -67,6 +67,28 @@ it('downloads a .dymo attachment for the requested size', function () {
         ->and(simplexml_load_string($body))->not->toBeFalse();
 });
 
+it('names the file as a slug of the tool name plus id and size', function () {
+    $tool = makeTool('Marteau Perforateur 18V');
+
+    expect(app(DymoLabelGenerator::class)->filename($tool, '32x57'))
+        ->toBe("marteau-perforateur-18v-{$tool->id}-32x57.dymo");
+});
+
+it('embeds a valid composed PNG on the 32x57 label', function () {
+    $tool = makeTool();
+
+    $xml = app(DymoLabelGenerator::class)->generateForTool($tool, '32x57');
+    $doc = simplexml_load_string($xml);
+    $png = base64_decode((string) $doc->DYMOLabel->DynamicLayoutManager->LabelObjects->ImageObject->Data, true);
+
+    expect($png)->not->toBeFalse()
+        ->and(bin2hex(substr((string) $png, 0, 4)))->toBe('89504e47');
+
+    // The composed image is wider than tall (QR + name side by side).
+    $img = imagecreatefromstring((string) $png);
+    expect(imagesx($img))->toBeGreaterThan(imagesy($img));
+});
+
 it('defaults to the 25x25 dymo label for an unknown size', function () {
     $tool = makeTool();
 
