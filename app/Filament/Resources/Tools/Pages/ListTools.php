@@ -23,6 +23,7 @@ final class ListTools extends ListRecords
     {
         return [
             Actions\CreateAction::make()
+                ->label('Ajouter un outil')
                 ->icon(Heroicon::Plus),
         ];
     }
