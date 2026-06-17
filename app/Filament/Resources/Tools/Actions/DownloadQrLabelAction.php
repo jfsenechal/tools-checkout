@@ -5,9 +5,11 @@ declare(strict_types=1);
 namespace App\Filament\Resources\Tools\Actions;
 
 use App\Models\Tool;
+use App\Services\DymoLabelGenerator;
 use Filament\Actions\Action;
 use Filament\Actions\ActionGroup;
 use Filament\Support\Icons\Heroicon;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 final class DownloadQrLabelAction
 {
@@ -43,9 +45,16 @@ final class DownloadQrLabelAction
         return Action::make('qr_dymo_'.$size)
             ->label($label)
             ->icon(Heroicon::ArrowDownTray)
-            ->url(fn (Tool $record): string => route('print.qr-dymo', [
-                'tool' => $record,
-                'size' => $size,
-            ]));
+            // Stream the file as a download response so Livewire/SPA navigation
+            // cannot render it inline as a page (the attachment is honoured).
+            ->action(function (Tool $record) use ($size): StreamedResponse {
+                $generator = app(DymoLabelGenerator::class);
+
+                return response()->streamDownload(
+                    fn () => print ($generator->generateForTool($record, $size)),
+                    $generator->filename($record, $size),
+                    ['Content-Type' => 'application/xml'],
+                );
+            });
     }
 }
