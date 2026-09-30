@@ -33,13 +33,6 @@ final class LdapAuthService implements LdapAuthenticator
             if ($connection->auth()->attempt($userLdap->getDn(), $password)) {
                 return $user;
             }
-            $message = $connection->getLdapConnection()->getDiagnosticMessage();
-
-            if (mb_strpos($message, '532') !== false) {
-                // "Your password has expired.";
-                return null;
-            }
-
         }
 
         return null;
