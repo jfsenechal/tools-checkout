@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Enums\StatusToolEnum;
+use App\Filament\Pages\Dashboard;
 use App\Filament\Widgets\CheckedOutToolsWidget;
 use App\Models\Category;
 use App\Models\Checkout;
@@ -69,4 +70,10 @@ it('does not show returned tools', function () {
     livewire(CheckedOutToolsWidget::class)
         ->call('loadTable')
         ->assertCanNotSeeTableRecords([$checkout]);
+});
+
+it('renders the dashboard in a single column', function () {
+    expect((new Dashboard)->getColumns())->toBe(1);
+
+    $this->get(Dashboard::getUrl())->assertSuccessful();
 });
