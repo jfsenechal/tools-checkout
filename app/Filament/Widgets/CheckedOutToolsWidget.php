@@ -61,6 +61,7 @@ final class CheckedOutToolsWidget extends TableWidget
                     ->falseColor('success'),
             ])
             ->defaultSort('checked_out_at', 'desc')
+            ->defaultPaginationPageOption(25)
             ->paginated([5, 10, 25]);
     }
 }
